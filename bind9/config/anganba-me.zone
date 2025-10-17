@@ -1,0 +1,17 @@
+$TTL 2d
+$ORIGIN anganba.me.
+
+@       IN  SOA     ns.anganba.me. info.anganba.me. (
+                        20251015 ; serial
+                        12h       ; refresh
+                        15m       ; retry
+                        3w        ; expire
+                        2h )      ; minimum ttl
+
+        IN  NS      ns.anganba.me.
+ns      IN  A       192.168.68.129
+
+; --- custom records below ---
+alo     IN  A       192.168.68.129
+*.alo   IN  A       192.168.68.129
+

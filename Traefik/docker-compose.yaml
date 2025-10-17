@@ -1,0 +1,61 @@
+---
+services:
+  traefik:
+    image: traefik:v3.5.3
+    container_name: traefik
+    restart: unless-stopped
+    networks:
+      - frontend
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./data/certs:/var/traefik/certs
+
+    # Dynamic runtime config
+    command:
+      - "--global.checkNewVersion=false"
+      - "--global.sendAnonymousUsage=false"
+      - "--log.level=DEBUG"
+      - "--api.dashboard=true"
+      - "--api.insecure=true"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--providers.docker.endpoint=unix:///var/run/docker.sock"
+      - "--providers.docker.exposedbydefault=false"
+      - "--certificatesresolvers.${PROVIDER}.acme.email=${ACME_EMAIL}"
+      - "--certificatesresolvers.${PROVIDER}.acme.storage=/var/traefik/certs/${PROVIDER}-acme.json"
+      - "--certificatesresolvers.${PROVIDER}.acme.caServer=https://acme-v02.api.letsencrypt.org/directory"
+      - "--certificatesresolvers.${PROVIDER}.acme.keyType=EC256"
+      - "--certificatesresolvers.${PROVIDER}.acme.dnsChallenge.provider=${PROVIDER}"
+      - "--certificatesresolvers.${PROVIDER}.acme.dnsChallenge.resolvers=1.1.1.1:53,8.8.8.8:53"
+
+    environment:
+      - PROVIDER=${PROVIDER}
+      - ACME_EMAIL=${ACME_EMAIL}
+      - CF_DNS_API_TOKEN=${CF_DNS_API_TOKEN}
+      - NAMECHEAP_API_USER=${NAMECHEAP_API_USER}
+      - NAMECHEAP_API_KEY=${NAMECHEAP_API_KEY}
+
+    labels:
+      - traefik.enable=true
+
+      # HTTP redirect to HTTPS
+      - "traefik.http.routers.traefik.rule=Host(`traefik.alo.anganba.me`)"
+      - "traefik.http.routers.traefik.entrypoints=web"
+      - "traefik.http.routers.traefik.middlewares=redirect-to-https"
+
+      # HTTPS router
+      - "traefik.http.routers.traefik-secure.rule=Host(`traefik.alo.anganba.me`)"
+      - "traefik.http.routers.traefik-secure.entrypoints=websecure"
+      - "traefik.http.routers.traefik-secure.tls.certresolver=${PROVIDER}"
+      - "traefik.http.routers.traefik-secure.service=api@internal"
+
+      # Middleware
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+
+networks:
+  frontend:
+    external: true

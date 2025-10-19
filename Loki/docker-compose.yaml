@@ -1,0 +1,33 @@
+services:
+  loki:
+    image: grafana/loki:3.5.7
+    container_name: loki
+    command: -config.file=/etc/loki/config.yaml
+    restart: unless-stopped
+    volumes:
+      - ./config/loki.yaml:/etc/loki/config.yaml:ro
+      - data_loki:/loki
+    labels:
+      - traefik.enable=true
+      # --- Traefik Router ---
+      - traefik.http.routers.loki.rule=Host(`loki.alo.anganba.me`)
+      - traefik.http.routers.loki.entrypoints=websecure
+      - traefik.http.routers.loki.tls=true
+      - traefik.http.routers.loki.tls.certresolver=${PROVIDER}
+      - traefik.http.routers.loki.service=loki
+      # --- Traefik Service ---
+      - traefik.http.services.loki.loadbalancer.server.port=3100
+      # --- Optional Auth Middleware ---
+      # - traefik.http.routers.loki.middlewares=authentik-middleware@file
+    networks:
+      - frontend
+      - monitoring
+
+volumes:
+  data_loki:
+
+networks:
+  frontend:
+    external: true
+  monitoring:
+    external: true

@@ -10,21 +10,69 @@ services:
       - "80:80"
       - "443:443"
       - "8080:8080"
+      - "8082:8082"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./data/certs:/var/traefik/certs
+      - ./logs:/var/log/traefik     # 🔹 added: log persistence for Promtail
 
-    # Dynamic runtime config
     command:
+      # ===============================================================
+      # 🔧 Global Settings
+      # ===============================================================
       - "--global.checkNewVersion=false"
       - "--global.sendAnonymousUsage=false"
       - "--log.level=DEBUG"
       - "--api.dashboard=true"
       - "--api.insecure=true"
+
+      # ===============================================================
+      # 🌐 EntryPoints
+      # ===============================================================
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.metrics.address=:8082"
+
+      # ===============================================================
+      # 📊 Prometheus Metrics
+      # ===============================================================
+      - "--metrics.prometheus=true"
+      - "--metrics.prometheus.entryPoint=metrics"
+      - "--metrics.prometheus.addEntryPointsLabels=true"
+      - "--metrics.prometheus.addRoutersLabels=true"
+      - "--metrics.prometheus.addServicesLabels=true"
+
+      # ===============================================================
+      # 🧩 Tempo Tracing Integration
+      # ===============================================================
+      - "--tracing.serviceName=traefik"
+      - "--tracing.otlp.grpc.endpoint=tempo:4317"
+      - "--tracing.otlp.grpc.insecure=true"
+
+      # ===============================================================
+      # 🪵 Access Log Configuration
+      # ===============================================================
+      - "--accesslog=true"
+      - "--accesslog.format=json"
+      - "--accesslog.filepath=/var/log/traefik/access.log"
+      - "--accesslog.fields.defaultmode=keep"
+      - "--accesslog.fields.headers.defaultmode=keep"
+      - "--accesslog.fields.headers.names.RequestHost=keep"
+      - "--accesslog.fields.headers.names.RequestMethod=keep"
+      - "--accesslog.fields.headers.names.RequestPath=keep"
+      - "--accesslog.fields.headers.names.RequestProtocol=keep"
+      - "--accesslog.fields.headers.names.RequestURI=keep"
+      - "--accesslog.fields.names.traceid=keep"
+
+      # ===============================================================
+      # 🐳 Docker Provider
+      # ===============================================================
       - "--providers.docker.endpoint=unix:///var/run/docker.sock"
       - "--providers.docker.exposedbydefault=false"
+
+      # ===============================================================
+      # 🔐 ACME Certificate Resolvers
+      # ===============================================================
       - "--certificatesresolvers.${PROVIDER}.acme.email=${ACME_EMAIL}"
       - "--certificatesresolvers.${PROVIDER}.acme.storage=/var/traefik/certs/${PROVIDER}-acme.json"
       - "--certificatesresolvers.${PROVIDER}.acme.caServer=https://acme-v02.api.letsencrypt.org/directory"
@@ -42,18 +90,24 @@ services:
     labels:
       - traefik.enable=true
 
-      # HTTP redirect to HTTPS
+      # ===============================================================
+      # 🌍 HTTP to HTTPS Redirect
+      # ===============================================================
       - "traefik.http.routers.traefik.rule=Host(`traefik.alo.anganba.me`)"
       - "traefik.http.routers.traefik.entrypoints=web"
       - "traefik.http.routers.traefik.middlewares=redirect-to-https"
 
-      # HTTPS router
+      # ===============================================================
+      # 🔒 HTTPS Secure Router
+      # ===============================================================
       - "traefik.http.routers.traefik-secure.rule=Host(`traefik.alo.anganba.me`)"
       - "traefik.http.routers.traefik-secure.entrypoints=websecure"
       - "traefik.http.routers.traefik-secure.tls.certresolver=${PROVIDER}"
       - "traefik.http.routers.traefik-secure.service=api@internal"
 
-      # Middleware
+      # ===============================================================
+      # ↪️ Redirect Middleware
+      # ===============================================================
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
 
 networks:

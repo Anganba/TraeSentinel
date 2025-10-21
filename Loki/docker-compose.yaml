@@ -7,18 +7,27 @@ services:
     volumes:
       - ./config/loki.yaml:/etc/loki/config.yaml:ro
       - data_loki:/loki
+    # ports:
+    #   - "3100:3100"
     labels:
       - traefik.enable=true
-      # --- Traefik Router ---
-      - traefik.http.routers.loki.rule=Host(`loki.alo.anganba.me`)
-      - traefik.http.routers.loki.entrypoints=websecure
-      - traefik.http.routers.loki.tls=true
-      - traefik.http.routers.loki.tls.certresolver=${PROVIDER}
-      - traefik.http.routers.loki.service=loki
-      # --- Traefik Service ---
-      - traefik.http.services.loki.loadbalancer.server.port=3100
-      # --- Optional Auth Middleware ---
-      # - traefik.http.routers.loki.middlewares=authentik-middleware@file
+
+      # HTTP redirect to HTTPS
+      - "traefik.http.routers.loki-http.rule=Host(`loki.anganba.me`)"
+      - "traefik.http.routers.loki-http.entrypoints=web"
+      - "traefik.http.routers.loki-http.middlewares=redirect-to-https"
+
+      # HTTPS router
+      - "traefik.http.routers.loki-https.rule=Host(`loki.anganba.me`)"
+      - "traefik.http.routers.loki-https.entrypoints=websecure"
+      - "traefik.http.routers.loki-https.tls=true"
+      - "traefik.http.routers.loki-https.tls.certresolver=${PROVIDER}"
+
+      # Tell Traefik to connect to Loki’s HTTP port (3100)
+      - "traefik.http.services.loki.loadbalancer.server.port=3100"
+
+      # Redirect middleware
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
     networks:
       - frontend
       - monitoring

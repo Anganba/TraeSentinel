@@ -4,14 +4,14 @@ volumes:
 
 services:
   grafana:
-    image: grafana/grafana:10.4.3
+    image: grafana/grafana:latest
     container_name: grafana
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=changeme
       - GF_USERS_ALLOW_SIGN_UP=false
-    ports:
-      - "3000:3000"
+    # ports:
+    #   - "3000:3000"
     volumes:
       - grafana-data:/var/lib/grafana
     restart: unless-stopped
@@ -21,12 +21,12 @@ services:
       - "traefik.enable=true"
 
       # HTTP router for redirect
-      - "traefik.http.routers.grafana.rule=Host(`grafana.alo.anganba.me`)"
+      - "traefik.http.routers.grafana.rule=Host(`mon.anganba.me`)"
       - "traefik.http.routers.grafana.entrypoints=web"
       - "traefik.http.routers.grafana.middlewares=redirect-to-https"
 
       # HTTPS router
-      - "traefik.http.routers.grafana-secure.rule=Host(`grafana.alo.anganba.me`)"
+      - "traefik.http.routers.grafana-secure.rule=Host(`mon.anganba.me`)"
       - "traefik.http.routers.grafana-secure.entrypoints=websecure"
       - "traefik.http.routers.grafana-secure.tls.certresolver=${PROVIDER}"
       - "traefik.http.routers.grafana-secure.service=grafana-svc"

@@ -1,11 +1,8 @@
-bind9/docker-compose.yaml
 Traefik/docker-compose.yaml
-nginx/docker-compose.yaml
 Portainer-Server/docker-compose.yaml
 Prometheus/docker-compose.yaml
 Grafana/docker-compose.yaml
 cadvisor/docker-compose.yaml
-node-exporter/docker-compose.yaml
 Loki/docker-compose.yaml
 Promtail/docker-compose.yaml
-Tempo/docker-compose.yaml
+node-exporter/docker-compose.yaml

@@ -93,14 +93,14 @@ services:
       # ===============================================================
       # 🌍 HTTP to HTTPS Redirect
       # ===============================================================
-      - "traefik.http.routers.traefik.rule=Host(`traefik.alo.anganba.me`)"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.anganba.me`)"
       - "traefik.http.routers.traefik.entrypoints=web"
       - "traefik.http.routers.traefik.middlewares=redirect-to-https"
 
       # ===============================================================
       # 🔒 HTTPS Secure Router
       # ===============================================================
-      - "traefik.http.routers.traefik-secure.rule=Host(`traefik.alo.anganba.me`)"
+      - "traefik.http.routers.traefik-secure.rule=Host(`traefik.anganba.me`)"
       - "traefik.http.routers.traefik-secure.entrypoints=websecure"
       - "traefik.http.routers.traefik-secure.tls.certresolver=${PROVIDER}"
       - "traefik.http.routers.traefik-secure.service=api@internal"

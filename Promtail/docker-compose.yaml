@@ -4,8 +4,8 @@ services:
     container_name: promtail
     restart: unless-stopped
     volumes:
-      - /var/log:/var/log:ro
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/log:/var/log:ro # Reads the host's system logs
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro # Reads all other container logs
       - ./config/promtail.yaml:/etc/promtail/config.yml:ro
     command: -config.file=/etc/promtail/config.yml
     networks:

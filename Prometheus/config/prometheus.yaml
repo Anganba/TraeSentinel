@@ -5,7 +5,7 @@ global:
 
   # Optional: labels added to all metrics for identification
   external_labels:
-    monitor: 'alo-monitor'
+    monitor: 'zenexcloud-monitor'
 
 # -------------------------------------------------------------------
 # Alerting (optional) — can be integrated later with Alertmanager

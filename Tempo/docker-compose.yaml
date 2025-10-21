@@ -8,15 +8,21 @@ services:
       - ./config/tempo.yaml:/etc/tempo/config.yaml:ro
       - tempo_data:/tmp/tempo
     labels:
-      - traefik.enable=true
-      # --- Traefik Router ---
-      - traefik.http.routers.tempo.rule=Host(`tempo.alo.anganba.me`)
-      - traefik.http.routers.tempo.entrypoints=websecure
-      - traefik.http.routers.tempo.tls=true
-      - traefik.http.routers.tempo.tls.certresolver=${PROVIDER}
-      - traefik.http.routers.tempo.service=tempo
-      # --- Traefik Service ---
-      - traefik.http.services.tempo.loadbalancer.server.port=3200
+      # --- This is your EXISTING Grafana API router ---
+      - "traefik.enable=true"
+      - "traefik.http.routers.tempo.rule=Host(`tempo.${DOMAIN}`)"
+      - "traefik.http.routers.tempo.entrypoints=websecure"
+      - "traefik.http.routers.tempo.tls=true"
+      - "traefik.http.routers.tempo.tls.certresolver=${PROVIDER}"
+      - "traefik.http.services.tempo.loadbalancer.server.port=3200"
+
+      # --- ADD THESE LABELS for OTLP HTTP Ingestion ---
+      # Create a new router for OTLP, maybe on a subdomain or path
+      - "traefik.http.routers.tempo-otlp-http.rule=Host(`tempo-otlp.${DOMAIN}`)"
+      - "traefik.http.routers.tempo-otlp-http.entrypoints=websecure"
+      - "traefik.http.routers.tempo-otlp-http.tls=true"
+      - "traefik.http.routers.tempo-otlp-http.tls.certresolver=${PROVIDER}"
+      - "traefik.http.services.tempo-otlp-http.loadbalancer.server.port=4318"
     networks:
       - frontend
       - monitoring

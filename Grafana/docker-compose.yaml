@@ -14,9 +14,11 @@ services:
     #   - "3000:3000"
     volumes:
       - grafana-data:/var/lib/grafana
+      
     restart: unless-stopped
     networks:
       - frontend
+      - monitoring
     labels:
       - "traefik.enable=true"
 
@@ -39,4 +41,6 @@ services:
 
 networks:
   frontend:
+    external: true
+  monitoring:
     external: true

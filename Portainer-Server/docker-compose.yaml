@@ -13,17 +13,18 @@ services:
       - "traefik.enable=true"
 
       # HTTP redirect to HTTPS
-      - "traefik.http.routers.portainer-http.rule=Host(`portainer.anganba.me`)"
-      - "traefik.http.routers.portainer-http.entrypoints=web"
-      - "traefik.http.routers.portainer-http.middlewares=redirect-to-https"
+      - "traefik.http.routers.portainer.rule=Host(`portainer.anganba.me`)"
+      - "traefik.http.routers.portainer.entrypoints=web"
+      - "traefik.http.routers.portainer.middlewares=redirect-to-https"
 
       # HTTPS router
-      - "traefik.http.routers.portainer-https.rule=Host(`portainer.anganba.me`)"
-      - "traefik.http.routers.portainer-https.entrypoints=websecure"
-      - "traefik.http.routers.portainer-https.tls.certresolver=${PROVIDER}"
+      - "traefik.http.routers.portainer-secure.rule=Host(`portainer.anganba.me`)"
+      - "traefik.http.routers.portainer-secure.entrypoints=websecure"
+      - "traefik.http.routers.portainer-secure.tls.certresolver=${PROVIDER}"
+      - "traefik.http.routers.portainer-secure.service=portainer-svc"
 
       # Tell Traefik to connect to Portainer’s internal HTTP port (9000)
-      - "traefik.http.services.portainer.loadbalancer.server.port=9000"
+      - "traefik.http.services.portainer-svc.loadbalancer.server.port=9000"
 
       # Redirect middleware
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"

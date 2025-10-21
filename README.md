@@ -1,312 +1,246 @@
-# DNS & Reverse Proxy Infrastructure (Cloudflare + Namecheap)
+# TraeSentinel: Automated Reverse Proxy + Monitoring Stack
 
-> A complete self-hosted DNS + reverse proxy stack using **BIND9**, **Traefik**, and **Docker Compose**, supporting both **Cloudflare** *(default)* and **Namecheap** for automated DNS-based SSL certificates via Let’s Encrypt (ACME).  
-> Designed as a DevOps lab project for managing custom DNS, HTTPS, and containerized infrastructure.
----
+A self-contained, modular DevOps stack featuring:
+- 🧬 **Traefik v3** reverse proxy with automatic SSL (ACME)
+- ☁️ DNS automation via **Cloudflare** or **Namecheap**
+- 📊 Full observability: **Grafana**, **Prometheus**, **Node Exporter**, **cAdvisor**
+- 🔧 Managed by a single smart script — `deploy.sh`
 
-## 🚀 Overview
-This project simulates a production-grade DNS and reverse proxy setup:
-- **BIND9** acts as an authoritative DNS for your custom domain.
-- **Traefik** handles HTTPS termination and automatic certificate generation.
-- You can switch between **Cloudflare** or **Namecheap** as the DNS API provider without editing configuration files.
-- Managed entirely with a single `deploy.sh` script.
-
-Built and tested on **Ubuntu Server 24.04 LTS** using **Docker Compose**, all services communicate on a shared `frontend` network.
+Built for **Ubuntu Server 24.04 LTS** and **Docker Compose**.
 
 ---
 
-## 🧩 Components
-
-| Component | Description |
-|------------|-------------|
-| **BIND9** | Authoritative DNS server for your internal or public domain (e.g. `anganba.me`) |
-| **Traefik v3.5** | Reverse proxy providing HTTPS with automatic certificate renewal |
-| **Let's Encrypt (ACME)** | SSL/TLS certificate authority used via DNS challenge |
-| **Cloudflare / Namecheap** | Supported DNS APIs for ACME DNS-01 challenge |
-| **Nginx** | Example backend web service |
-| **Portainer** | Web-based UI for Docker management |
-
----
-
-## 🧠 Architecture Diagram
-```
-                ┌─────────────────────┐
-                │     Client (Web)    │
-                └─────────┬───────────┘
-                          │ HTTPS (443)
-                          ▼
-                ┌──────────────────────┐
-                │      Traefik         │
-                │  Reverse Proxy + SSL │
-                └─────────┬────────────┘
-                          │ Internal network (frontend)
-          ┌───────────────┴───────────────┐
-          │                               │
-  ┌──────────────┐              ┌─────────────────┐
-  │   Nginx App  │              │   Portainer UI  │
-  └──────────────┘              └─────────────────┘
-          │                               │
-          ▼                               ▼
- nginx.alo.anganba.me        portainer.alo.anganba.me
-          │                               │                          
-          ▼                               ▼   
-┌────────────────────────────────────────────────────┐
-│                    BIND9 DNS                       │
-│              ns.anganba.me (local)                 │
-└────────────────────────────────────────────────────┘
-```
-
-
----
-
-## ⚙️ Features
-
-- 🔄 Switch between **Cloudflare** and **Namecheap** DNS easily
-- 🔐 Automated SSL via Let's Encrypt DNS-01 challenge
-- 🧩 Modular services (Traefik, BIND9, Nginx, Portainer)
-- 📜 Single deployment script (`deploy.sh`)
-- 🧠 Local authoritative DNS management
-- 🧱 Real-world DevOps lab setup
-
----
-
-## 🛠 Setup & Deployment
-
-### 1️⃣ Prerequisites
-
-- A valid domain name (e.g., `anganba.me`)
-- API credentials for **Cloudflare** and/or **Namecheap**
-- Installed dependencies:
-  ```bash
-  sudo apt install docker.io docker-compose -y
-  ```
-- A Linux server or VM (tested on Ubuntu Server 24.04)
-
----
-
-### 2️⃣ Clone Repository
+## 🚀 Quick Start
 
 ```bash
-git clone https://github.com/Anganba/dns-traefik-lab.git
-cd dns-traefik-lab
+git clone https://github.com/Anganba/TraeSentinel.git
+cd TraeSentinel
+sudo docker network create frontend
+sudo docker network create monitoring
+sudo chmod +x deploy.sh
+sudo ./deploy.sh up cloudflare
 ```
+
+> Default DNS provider: Cloudflare  
+> To switch: `sudo ./deploy.sh up namecheap`
 
 ---
 
-### 3️⃣ Configure Provider Environments
+## 🌐 Services Overview
 
-You can use either **Cloudflare** *(default)* or **Namecheap**.
+| Service | URL Example | Description |
+|----------|-------------|--------------|
+| Traefik Dashboard | https://traefik.anganba.me | Reverse proxy routing & SSL management |
+| Grafana | https://mon.anganba.me | Visual monitoring & analytics UI |
+| Portainer | https://portainer.anganba.me | Docker web management interface |
+| Prometheus | *internal only* | Metrics collector |
+| Node Exporter / cAdvisor | *internal only* | System & container-level metrics |
 
-#### **For Cloudflare** (`Traefik/.env.cloudflare`)
+All services are automatically networked and secured through Traefik.
+
+---
+
+## 📦 Deployment Script
+
+`deploy.sh` provides lifecycle management for the full TraeSentinel stack:
+
+```bash
+sudo ./deploy.sh up        # Start the full stack
+sudo ./deploy.sh down      # Stop all containers
+sudo ./deploy.sh restart   # Restart everything
+sudo ./deploy.sh status    # Show container health summary
+```
+
+### Script Behavior
+- Detects **Docker**, **Docker Compose**, or **Podman Compose** automatically.
+- Loads each stack from `stack.list` dynamically.
+- Supports provider-specific `.env` files for Cloudflare and Namecheap.
+- Prints colored, timestamped logs for clarity.
+
+---
+
+## ⚙️ Configuration
+
+### DNS Provider Environment Files
+
+#### **Cloudflare** (`Traefik/.env.cloudflare`)
 ```env
 PROVIDER=cloudflare
 ACME_EMAIL=info@yourdomain
-CF_DNS_API_TOKEN=your_cloudflare_api_token
+CF_DNS_API_TOKEN=your_cloudflare_token
 ```
 
-#### **For Namecheap** (`Traefik/.env.namecheap`)
+#### **Namecheap** (`Traefik/.env.namecheap`)
 ```env
 PROVIDER=namecheap
 ACME_EMAIL=info@yourdomain
-NAMECHEAP_API_USER=your_username
-NAMECHEAP_API_KEY=your_api_key
+NAMECHEAP_API_USER=your_user
+NAMECHEAP_API_KEY=your_key
 NAMECHEAP_API_URL=https://api.namecheap.com/xml.response
 ```
 
----
-
-### 4️⃣ Adjust DNS Zone File
-
-Update the zone file for your domain in:
-```
-bind9/config/anganba-me.zone
-```
-
-Example:
-```dns
-ns     IN  A   192.168.68.129
-alo    IN  A   192.168.68.129
-*.alo  IN  A   192.168.68.129
-```
-
-> Replace `192.168.68.129` with your server’s IP address.
+Each `.env` file defines your ACME certificate resolver and API credentials.
 
 ---
 
-If you skip this step, DNS queries and SSL validation will fail.
+## 🔍 Monitoring Stack
 
-Also Your Namecheap account must have:
-API access enabled under “Profile → Tools → Namecheap API Access”.
-Your host’s public IP added to the “API Whitelist IPs” section.
-If you don't have your local VMs' public IP or VPS IP get whitelisted in the Namecheap API section, TLS Handshake will fail.
+The monitoring suite lives entirely in the private `monitoring` Docker network.
 
+### Prometheus
+- Collects metrics from Traefik, cAdvisor, Node Exporter, and others.
+- **No public ports exposed**.
+- Scrape configuration examples:
 
-### 5️⃣ Deploy the Stack
+```yaml
+scrape_configs:
+  - job_name: "traefik"
+    static_configs:
+      - targets: ["traefik:8080"]
 
-Create a network called "frontend" since it is hardcoded in the script.
-Run:
-```bash
-sudo docker network create frontend
+  - job_name: "node_exporter"
+    static_configs:
+      - targets: ["node-exporter:9100"]
+
+  - job_name: "cadvisor"
+    static_configs:
+      - targets: ["cadvisor:8080"]
 ```
 
-Make the deploy script executable:
-```bash
-sudo chmod +x deploy.sh
+### Grafana
+- Connects internally to Prometheus: `http://prometheus:9090`
+- Default admin credentials:
+  ```bash
+  admin / changeme
+  ```
+- Accessible at `https://mon.anganba.me`
+
+### Node Exporter
+- Provides OS-level metrics (CPU, memory, disks).
+- Runs in `host` PID mode for system visibility.
+
+### cAdvisor
+- Collects container-level metrics directly from Docker.
+- Accessible internally via `cadvisor:8080/metrics`.
+
+---
+
+## 🛠️ Traefik Configuration
+
+Traefik handles:
+- Dynamic reverse proxy routing
+- Automatic Let's Encrypt or Cloudflare SSL certificates
+- Middleware for HTTPS redirection and authentication
+
+**Entrypoints:**
+```yaml
+--entrypoints.web.address=:80
+--entrypoints.websecure.address=:443
+--entrypoints.metrics.address=:8080
 ```
 
-Then start the full infrastructure:
-```bash
-sudo ./deploy.sh up
+**Metrics:**
+```yaml
+--metrics.prometheus=true
+--metrics.prometheus.entryPoint=metrics
 ```
 
-To switch providers:
-```bash
-sudo ./deploy.sh up namecheap
+**Routers & Services Example (Grafana)**
+```yaml
+labels:
+  - "traefik.enable=true"
+  - "traefik.http.routers.grafana.rule=Host(`mon.anganba.me`)"
+  - "traefik.http.routers.grafana.entrypoints=websecure"
+  - "traefik.http.routers.grafana.tls.certresolver=${PROVIDER}"
+  - "traefik.http.services.grafana.loadbalancer.server.port=3000"
 ```
 
+---
 
-Check running status:
+## 🛡️ Security Model
+
+- Traefik is the only publicly exposed entry point (ports 80 & 443).
+- Prometheus, Node Exporter, and cAdvisor remain internal.
+- HTTPS enforced for all external routes.
+- Cloudflare or Namecheap API-driven SSL (ACME DNS-01 challenge).
+
+### Optional Hardening
+- Restrict access to dashboards using basic auth:
+  ```yaml
+  - "traefik.http.middlewares.auth.basicauth.users=admin:$$apr1$$hash..."
+  ```
+- Enable firewall rules for Docker bridge networks.
+
+---
+
+## 🔊 Troubleshooting
+
+### TLS/ACME Failures
+- Check DNS provider credentials (`.env` file)
+- Ensure the A-record resolves to your VPS IP
+- Confirm `acme.json` permissions: `chmod 600 Traefik/data/acme.json`
+
+### DNS Propagation
+```bash
+dig +short monitor.anganba.me
+```
+
+### Service Health
 ```bash
 sudo ./deploy.sh status
 ```
-
-### The usage of the deploy script:
-```
-Usage: ./deploy.sh {up|down|restart|status}
-  up       Start all services
-  down     Stop and remove all services
-  restart  Restart all services
-  status   Show running containers and health info  
-```
-
-## 🌐 Access Services
-
-| Service | URL | Description |
-|----------|-----|-------------|
-| Traefik Dashboard | https://traefik.alo.anganba.me | Reverse proxy UI (insecure mode ON for lab) |
-| Portainer | https://portainer.alo.anganba.me | Docker management UI |
-| Nginx Demo | https://nginx.alo.anganba.me | Example app |
-
----
-
-
-## 🧪 DNS Testing
-
-Check your DNS server resolution:
+or directly:
 ```bash
-dig @192.168.68.129 portainer.alo.anganba.me
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 ```
 
-Test from client machine:
+### Debugging ACME
 ```bash
-nslookup nginx.alo.anganba.me 192.168.68.129
+docker logs traefik | grep acme
 ```
 
 ---
 
-## 🔒 SSL Certificate Automation
-
-Certificates are automatically generated and renewed using Let’s Encrypt DNS challenge.
-
-Stored in:
-```
-Traefik/data/certs/cloudflare-acme.json
-Traefik/data/certs/namecheap-acme.json
-```
-
-Set permissions:
-```bash
-sudo chmod 600 Traefik/data/certs/*.json
-```
+## 🛠️ System Requirements
+- Ubuntu Server 24.04 LTS (or equivalent)
+- Docker Engine >= 27
+- Docker Compose >= 2.23
+- Minimum 2GB RAM, 2 vCPU
 
 ---
 
-## 🧱 Troubleshooting
-
-### ⚠️ TLS Handshake Errors
-- Check file permissions for ACME files
-- Verify DNS A-records resolve correctly
-- Wait 5–10 minutes for DNS propagation
-- Ensure correct API tokens or keys are in `.env` files
-
-### ⚠️ DNS Not Resolving
-- Confirm `named.conf` includes your zone
-- Run:  
-  ```bash
-  docker logs dns-bind9
-  ```
-  to verify successful zone loading.
-
-### ⚠️ ACME Errors (“NXDOMAIN” or “invalid TLD”)
-- Ensure domain/subdomain exists in your DNS zone.
-- Let’s Encrypt does **not** issue certificates for internal-only domains (e.g., `.local`).
-
-### ⚠️ Update Your DNS Settings
-If you want to access those `https://traefik.yea.zenorahost.com` in your windows or local machine, make sure to point your DNS settings preferred DNS to `VM's IP where DNS server is running` and as alternative DNS use `1.1.1.1` or `8.8.8.8`.
-
-
-
----
-
-## 📂 Project Structure
-
-```text
-dns-traefik-lab/
-├── bind9/
-│   ├── config/
-│   │   ├── named.conf
-│   │   └── anganba-me.zone
-│   ├── cache/
-│   ├── records/
-│   └── docker-compose.yaml
+## 🖊️ Repository Structure
+```
+TraeSentinel/
 ├── Traefik/
-│   ├── config/
-│   │   └── traefik.yaml
-│   ├── data/certs/
-│   │   ├── cloudflare-acme.json
-│   │   └── namecheap-acme.json
+│   ├── docker-compose.yml
 │   ├── .env.cloudflare
 │   ├── .env.namecheap
-│   └── docker-compose.yaml
-├── nginx/
-│   └── docker-compose.yaml
-├── Portainer-Server/
-│   └── docker-compose.yaml
+│   └── data/
+├── Monitoring/
+│   ├── prometheus/
+│   ├── grafana/
+│   ├── cadvisor/
+│   └── node-exporter/
 ├── deploy.sh
-└── README.md
+├── stack.list
+├── README.md
+├── docs/
+│   ├── DEPLOYMENT_GUIDE.md
+│   └── ARCHITECTURE_OVERVIEW.md
+└── LICENSE
 ```
 
+---
+
+## 🗪️ License
+**MIT License**  
+For educational and demonstration use.
 
 ---
 
-## 📸 Demo Screenshots
-- `dig` DNS resolution showing correct IP mapping
-![DNS Verification](https://github.com/Anganba/ImagesHostedOnGitHub/blob/6f545125cdf5952b9d1d70a1e3bae77f955e3237/dns-traefik-lab-img/DNS_verification.png)
-- Traefik dashboard with routers + TLS certs
-![Traefik Dashboard](https://github.com/Anganba/ImagesHostedOnGitHub/blob/727c6bbd7b58c6b2a93dafa7e8a694993eb30886/dns-traefik-lab-img/traefik.png)
-- NGINX Browser view with HTTPS padlock
-![NGINX HTTPS Result](https://github.com/Anganba/ImagesHostedOnGitHub/blob/d8ec622763c0339949da6742d48752bbd697bcc7/dns-traefik-lab-img/nginx.png)
-- Portainer dashboard running behind Traefik
-![Portainer UI](https://github.com/Anganba/ImagesHostedOnGitHub/blob/584a5bbd3b662971b46e57e0fd224d9fb1c26c54/dns-traefik-lab-img/portainer.png)
+## 👨‍💻 Author
+**Anganba Singha**  
+DevOps | Linux Server Administration | Cybersecurity Enthusiast  
+📧 anganba.sananu@gmail.com
 
-
-
----
-
-## 🧩 Future Enhancements
-
-- Add **HAProxy** for load balancing
-- Enable **IPv6** for Traefik and BIND9
-- Integrate **Grafana + Prometheus** monitoring
-- Add **Automatic DNS Sync** with Cloudflare API
-
----
-
-## 🪪 License
-MIT License — Free for educational and demonstration use.
-
----
-
-## 🌐 Author
-**Anganba Singha**
-DevOps | Linux Server Administrator | Cybersecurity Enthusiast

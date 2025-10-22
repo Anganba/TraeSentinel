@@ -12,25 +12,34 @@ services:
       - --storage.tsdb.retention.size=2GB
     # ports:
     #   - "9090:9090"
-    # labels:
-    #   - "traefik.enable=true"
+    labels:
+      - "traefik.enable=true"
 
-    #   # HTTP router → redirect to HTTPS
-    #   - "traefik.http.routers.prometheus.rule=Host(`prometheus.anganba.me`)"
-    #   - "traefik.http.routers.prometheus.entrypoints=web"
-    #   - "traefik.http.routers.prometheus.middlewares=redirect-to-https"
+      # --- MIDDLEWARE DEFINITIONS ---
+      # 1. Middleware to redirect HTTP → HTTPS
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
 
-    #   # HTTPS router
-    #   - "traefik.http.routers.prometheus-secure.rule=Host(`prometheus.anganba.me`)"
-    #   - "traefik.http.routers.prometheus-secure.entrypoints=websecure"
-    #   - "traefik.http.routers.prometheus-secure.tls.certresolver=${PROVIDER}"
-    #   - "traefik.http.routers.prometheus-secure.service=prometheus-svc"
+      # 2. Middleware for Basic Auth
+      - "traefik.http.middlewares.prometheus-auth.basicauth.users=admin:${TRAEFIK_PASSWORD}"
 
-    #   # Service definition — map to container’s internal port 9090
-    #   - "traefik.http.services.prometheus-svc.loadbalancer.server.port=9090"
+      # --- ROUTER DEFINITIONS ---
+      # 3. HTTP router (non-secure)
+      # This router just catches HTTP and applies the redirect
+      - "traefik.http.routers.prometheus.rule=Host(\"prometheus.${DOMAIN}\")"
+      - "traefik.http.routers.prometheus.entrypoints=web"
+      - "traefik.http.routers.prometheus.middlewares=redirect-to-https"
 
-    #   # Middleware to redirect HTTP → HTTPS
-    #   - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      # 4. HTTPS router (secure)
+      # This router handles HTTPS, enables TLS, and applies the auth middleware
+      - "traefik.http.routers.prometheus-secure.rule=Host(\"prometheus.${DOMAIN}\")"
+      - "traefik.http.routers.prometheus-secure.entrypoints=websecure"
+      - "traefik.http.routers.prometheus-secure.tls=true" 
+      - "traefik.http.routers.prometheus-secure.tls.certresolver=${PROVIDER}"
+      - "traefik.http.routers.prometheus-secure.service=prometheus-svc"
+      - "traefik.http.routers.prometheus-secure.middlewares=prometheus-auth" # <--applies to 'prometheus-secure
+
+      # 5. Service definition
+      - "traefik.http.services.prometheus-svc.loadbalancer.server.port=9090"
 
     volumes:
       - ./config/prometheus.yaml:/etc/prometheus/prometheus.yaml:ro

@@ -4,13 +4,33 @@ services:
     container_name: promtail
     restart: unless-stopped
     volumes:
-      - /var/log:/var/log:ro # Reads the host's system logs
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro # Reads all other container logs
+      # 1. Mount the Docker socket (read-only) for service discovery
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      
+      # 2. Mount host system logs (read-only) - for the 'system' job
+      - /var/log:/var/log:ro
+      
+      # 3. Mount the config file (read-only)
       - ./config/promtail.yaml:/etc/promtail/config.yml:ro
-    command: -config.file=/etc/promtail/config.yml
+      
+      # 4. Mount a persistent volume for the positions file (IMPORTANT)
+      - promtail-positions:/var/promtail
+      
+    # 5. Update command to use the persistent positions file
+    command: -config.file=/etc/promtail/config.yml -positions.file=/var/promtail/positions.yaml
+    
+    environment:
+      # 6. Pass the host's hostname to be used as a label
+      - HOSTNAME=${HOSTNAME}
+      
     networks:
       - monitoring
 
 networks:
   monitoring:
     external: true
+    
+# 7. Define the persistent volume
+volumes:
+  promtail-positions:
+    driver: local

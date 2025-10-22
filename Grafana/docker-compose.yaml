@@ -25,22 +25,24 @@ services:
     labels:
       - "traefik.enable=true"
 
-      # HTTP router for redirect
-      - "traefik.http.routers.grafana.rule=Host('mon.${DOMAIN}')"
+      # 1. MIDDLEWARE DEFINITION
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true"
+
+      # 2. HTTP router 
+      - "traefik.http.routers.grafana.rule=Host(\"mon.${DOMAIN}\")"
       - "traefik.http.routers.grafana.entrypoints=web"
       - "traefik.http.routers.grafana.middlewares=redirect-to-https"
 
-      # HTTPS router
-      - "traefik.http.routers.grafana-secure.rule=Host('mon.${DOMAIN}')"
+
+      - "traefik.http.routers.grafana-secure.rule=Host(\"mon.${DOMAIN}\")"
       - "traefik.http.routers.grafana-secure.entrypoints=websecure"
+      - "traefik.http.routers.grafana-secure.tls=true"
       - "traefik.http.routers.grafana-secure.tls.certresolver=${PROVIDER}"
       - "traefik.http.routers.grafana-secure.service=grafana-svc"
 
-      # Internal port mapping
+      # 4. Internal port mapping
       - "traefik.http.services.grafana-svc.loadbalancer.server.port=3000"
-
-      # Middleware for HTTP→HTTPS redirect
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
 
 networks:
   frontend:

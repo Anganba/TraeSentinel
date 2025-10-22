@@ -10,7 +10,7 @@ services:
     labels:
       # --- This is your EXISTING Grafana API router ---
       - "traefik.enable=true"
-      - "traefik.http.routers.tempo.rule=Host(`tempo.${DOMAIN}`)"
+      - "traefik.http.routers.tempo.rule=Host(\"tempo.${DOMAIN}\")"
       - "traefik.http.routers.tempo.entrypoints=websecure"
       - "traefik.http.routers.tempo.tls=true"
       - "traefik.http.routers.tempo.tls.certresolver=${PROVIDER}"
@@ -18,7 +18,7 @@ services:
 
       # --- ADD THESE LABELS for OTLP HTTP Ingestion ---
       # Create a new router for OTLP, maybe on a subdomain or path
-      - "traefik.http.routers.tempo-otlp-http.rule=Host(`tempo-otlp.${DOMAIN}`)"
+      - "traefik.http.routers.tempo-otlp-http.rule=Host(\"tempo-otlp.${DOMAIN}\")"
       - "traefik.http.routers.tempo-otlp-http.entrypoints=websecure"
       - "traefik.http.routers.tempo-otlp-http.tls=true"
       - "traefik.http.routers.tempo-otlp-http.tls.certresolver=${PROVIDER}"

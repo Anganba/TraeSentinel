@@ -56,11 +56,12 @@ compose_up(){
 
     SERVICE_NAME=$(basename "$(dirname "$path")")
     log "Starting ${SERVICE_NAME}..."
-    if [[ "$path" == *"Traefik/"* ]]; then
-      $COMPOSE_CMD --env-file "$ENV_FILE" -f "${PROJECT_ROOT}/${path}" up -d || error "Failed: ${SERVICE_NAME}"
-    else
-      $COMPOSE_CMD -f "${PROJECT_ROOT}/${path}" up -d || error "Failed: ${SERVICE_NAME}"
-    fi
+    # if [[ "$path" == *"Traefik/"* ]]; then
+    #   $COMPOSE_CMD --env-file "$ENV_FILE" -f "${PROJECT_ROOT}/${path}" up -d || error "Failed: ${SERVICE_NAME}"
+    # else
+    #   $COMPOSE_CMD -f "${PROJECT_ROOT}/${path}" up -d || error "Failed: ${SERVICE_NAME}"
+    # fi
+    $COMPOSE_CMD --env-file "$ENV_FILE" -f "${PROJECT_ROOT}/${path}" up -d || error "Failed: ${SERVICE_NAME}"
   done
 
   section "All Services Started"

@@ -2,30 +2,76 @@ server:
   http_listen_port: 9080
   grpc_listen_port: 0
 
+# Use the new persistent volume path
 positions:
-  filename: /tmp/positions.yaml
+  filename: /var/promtail/positions.yaml
 
 clients:
   - url: http://loki:3100/loki/api/v1/push
 
 scrape_configs:
-  - job_name: containers
+  # =================================================================
+  # JOB 1: Docker Service Discovery (Industry Standard)
+  # =================================================================
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+        # filters:
+        #   - name: label
+        #     values: ["logging=true"]
+
+    relabel_configs:
+      - source_labels: ['__meta_docker_container_host']
+        replacement: ${HOSTNAME}
+        target_label: host
+      
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: job
+        
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: container
+        
+      - source_labels: ['__meta_docker_container_image_name']
+        target_label: image
+        
+      - source_labels: ['__meta_docker_container_log_stream']
+        target_label: stream
+
+    pipeline_stages:
+      - docker: {}
+
+      - json:
+          expressions:
+            level: level
+            msg: msg | message | log
+            service: service | app
+            time: time | timestamp | "@timestamp"
+
+      - labels:
+          level:
+          service:
+          
+      # --- THIS BLOCK IS NOW FIXED ---
+      - timestamp:
+          source: time
+          format: RFC3339Nano
+          # The invalid "action_on_failure: fallback" line has been removed.
+          # It will now default to "skip", which is the correct behavior.
+          
+      - output:
+          source: msg
+
+  # =================================================================
+  # JOB 2: Host System Logs
+  # =================================================================
+  - job_name: system
     static_configs:
       - targets:
           - localhost
         labels:
-          job: containers
+          job: system
           host: ${HOSTNAME}
-          __path__: /var/lib/docker/containers/*/*.log
-    pipeline_stages:
-      - docker: {}
-      - json:
-          expressions:
-            level: level
-            msg: msg
-            stream: stream
-            time: time
-      - labels:
-          level:
-      - output:
-          source: msg
+          __path__: /var/log/{syslog,auth.log,kern.log,*.log}

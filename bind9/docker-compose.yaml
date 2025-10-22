@@ -1,0 +1,18 @@
+services:
+  bind9:
+    container_name: dns-bind9
+    image: ubuntu/bind9:latest
+    user: root
+    environment:
+      - BIND9_USER=root
+      - TZ=Europe/Berlin
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+    volumes:
+      - ./config:/etc/bind:Z
+      - ./cache:/var/cache/bind:Z
+      - ./records:/var/lib/bind:Z
+    command: >
+      bash -c "chown -R bind:bind /etc/bind /var/cache/bind /var/lib/bind && named -u bind -g"
+    restart: unless-stopped

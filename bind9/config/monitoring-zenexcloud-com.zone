@@ -1,0 +1,17 @@
+$TTL 2d
+$ORIGIN zenexcloud.com.
+
+@       IN  SOA     ns.monitoring.zenexcloud.com. info@monitoring.zenexcloud.com. (
+                        20251015 ; serial
+                        12h       ; refresh
+                        15m       ; retry
+                        3w        ; expire
+                        2h )      ; minimum ttl
+
+        IN  NS      ns.monitoring.zenexcloud.com.
+ns      IN  A       206.162.244.192
+
+; --- custom records below ---
+@     IN  A       206.162.244.192
+*.@   IN  A       206.162.244.192
+

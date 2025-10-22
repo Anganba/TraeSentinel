@@ -1,0 +1,45 @@
+volumes:
+  prometheus-data:
+    driver: local
+
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yaml
+      - --storage.tsdb.retention.time=7d
+      - --storage.tsdb.retention.size=2GB
+    # ports:
+    #   - "9090:9090"
+    # labels:
+    #   - "traefik.enable=true"
+
+    #   # HTTP router → redirect to HTTPS
+    #   - "traefik.http.routers.prometheus.rule=Host(`prometheus.anganba.me`)"
+    #   - "traefik.http.routers.prometheus.entrypoints=web"
+    #   - "traefik.http.routers.prometheus.middlewares=redirect-to-https"
+
+    #   # HTTPS router
+    #   - "traefik.http.routers.prometheus-secure.rule=Host(`prometheus.anganba.me`)"
+    #   - "traefik.http.routers.prometheus-secure.entrypoints=websecure"
+    #   - "traefik.http.routers.prometheus-secure.tls.certresolver=${PROVIDER}"
+    #   - "traefik.http.routers.prometheus-secure.service=prometheus-svc"
+
+    #   # Service definition — map to container’s internal port 9090
+    #   - "traefik.http.services.prometheus-svc.loadbalancer.server.port=9090"
+
+    #   # Middleware to redirect HTTP → HTTPS
+    #   - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+
+    volumes:
+      - ./config/prometheus.yaml:/etc/prometheus/prometheus.yaml:ro
+      - prometheus-data:/prometheus
+
+    restart: unless-stopped
+    networks:
+      - frontend
+
+networks:
+  frontend:
+    external: true

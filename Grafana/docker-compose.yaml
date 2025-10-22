@@ -1,0 +1,49 @@
+volumes:
+  grafana-data:
+    driver: local
+
+services:
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=changeme
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_HTTP_ADDR=0.0.0.0
+      - GF_SERVER_HTTP_PORT=3000
+
+    # ports:
+    #   - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      
+    restart: unless-stopped
+    networks:
+      - frontend
+      - monitoring
+    labels:
+      - "traefik.enable=true"
+
+      # HTTP router for redirect
+      - "traefik.http.routers.grafana.rule=Host('mon.${DOMAIN}')"
+      - "traefik.http.routers.grafana.entrypoints=web"
+      - "traefik.http.routers.grafana.middlewares=redirect-to-https"
+
+      # HTTPS router
+      - "traefik.http.routers.grafana-secure.rule=Host('mon.${DOMAIN}')"
+      - "traefik.http.routers.grafana-secure.entrypoints=websecure"
+      - "traefik.http.routers.grafana-secure.tls.certresolver=${PROVIDER}"
+      - "traefik.http.routers.grafana-secure.service=grafana-svc"
+
+      # Internal port mapping
+      - "traefik.http.services.grafana-svc.loadbalancer.server.port=3000"
+
+      # Middleware for HTTP→HTTPS redirect
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+
+networks:
+  frontend:
+    external: true
+  monitoring:
+    external: true

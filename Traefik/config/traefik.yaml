@@ -16,10 +16,10 @@ providers:
 # =========================================
 # 🧩 Tracing Configuration (Tempo)
 # =========================================
-tracing:
-  serviceName: traefik
-  samplingRate: 1.0
-  otlp:
-    grpc:
-      endpoint: tempo:4317
-      insecure: true
+# tracing:
+#   serviceName: traefik
+#   samplingRate: 1.0
+#   otlp:
+#     grpc:
+#       endpoint: tempo:4317
+#       insecure: true

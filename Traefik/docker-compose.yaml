@@ -6,10 +6,11 @@ services:
     restart: unless-stopped
     networks:
       - frontend
+      - monitoring
     ports:
       - "80:80"
       - "443:443"
-      - "8080:8080"
+      # - "8080:8080"
       - "8082:8082"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -24,7 +25,7 @@ services:
       - "--global.sendAnonymousUsage=false"
       - "--log.level=DEBUG"
       - "--api.dashboard=true"
-      - "--api.insecure=true"
+      #- "--api.insecure=true"
 
       # ===============================================================
       # 🌐 EntryPoints
@@ -45,9 +46,9 @@ services:
       # ===============================================================
       # 🧩 Tempo Tracing Integration
       # ===============================================================
-      - "--tracing.serviceName=traefik"
-      - "--tracing.otlp.grpc.endpoint=tempo:4317"
-      - "--tracing.otlp.grpc.insecure=true"
+      # - "--tracing.serviceName=traefik"
+      # - "--tracing.otlp.grpc.endpoint=tempo:4317"
+      # - "--tracing.otlp.grpc.insecure=true"
 
       # ===============================================================
       # 🪵 Access Log Configuration
@@ -109,6 +110,11 @@ services:
       # ↪️ Redirect Middleware
       # ===============================================================
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      # ===============================================================
+      # ↪️ Basic Authentication for Traefik Dashboard
+      # ===============================================================
+      - "traefik.http.middlewares.traefik-auth.basicauth.users=admin:$$2y$$05$$I1bwOuVafwDrhcwhqjRwPOnAJIXTrxAHS7F1KR80GmbVAkITcFcG2"
+      - "traefik.http.routers.traefik-secure.middlewares=traefik-auth"
 
 networks:
   frontend:

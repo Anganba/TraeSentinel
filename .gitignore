@@ -1,2 +1,3 @@
 Traefik/data/*
 Traefik/.env.cloudflare
+Traefik/logs

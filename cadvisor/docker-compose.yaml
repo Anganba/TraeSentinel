@@ -3,6 +3,9 @@ services:
     image: gcr.io/cadvisor/cadvisor:latest
     container_name: cadvisor
     restart: unless-stopped
+    networks:
+      - frontend
+      - monitoring
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:rw
@@ -12,4 +15,6 @@ services:
       - "traefik.enable=false"
 networks:
   frontend:
+    external: true
+  monitoring:
     external: true

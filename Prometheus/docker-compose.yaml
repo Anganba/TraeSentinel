@@ -10,6 +10,8 @@ services:
       - --config.file=/etc/prometheus/prometheus.yaml
       - --storage.tsdb.retention.time=7d
       - --storage.tsdb.retention.size=2GB
+      - --web.enable-remote-write-receiver
+      - --log.level=debug
     # ports:
     #   - "9090:9090"
     labels:

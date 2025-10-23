@@ -54,12 +54,10 @@ scrape_configs:
           level:
           service:
           
-      # --- THIS BLOCK IS NOW FIXED ---
+      
       - timestamp:
           source: time
           format: RFC3339Nano
-          # The invalid "action_on_failure: fallback" line has been removed.
-          # It will now default to "skip", which is the correct behavior.
           
       - output:
           source: msg

@@ -3,6 +3,7 @@ services:
     image: grafana/promtail:3.5.7
     container_name: promtail
     restart: unless-stopped
+    user: root
     volumes:
       # 1. Mount the Docker socket (read-only) for service discovery
       - /var/run/docker.sock:/var/run/docker.sock:ro

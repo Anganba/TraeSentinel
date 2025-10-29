@@ -5,13 +5,32 @@ log:
   level: DEBUG
 api:
   dashboard: true
-  insecure: true
-
-
+  #insecure: true
+# http:
+#   middlewares:
+#     # --- For Security Headers ---
+#     sec-headers:
+#       headers:
+#         browserXssFilter: true
+#         contentTypeNosniff: true
+#         frameDeny: true
+#         stsSeconds: 31536000
+#         stsIncludeSubdomains: true
+#         stsPreload: true
+        
+#     # --- For redirecting HTTP to HTTPS ---
+#     redirect-to-https:
+#       redirectScheme:
+#         scheme: https
+#         permanent: true
 providers:
   docker:
     endpoint: "unix:///var/run/docker.sock"
     exposedByDefault: false
+
+# ========================================
+# Middlewares
+# ========================================
 
 # =========================================
 # 🧩 Tracing Configuration (Tempo)

@@ -14,33 +14,33 @@ services:
       - --log.level=debug
     # ports:
     #   - "9090:9090"
+
     labels:
       - "traefik.enable=true"
 
-      # --- MIDDLEWARE DEFINITIONS ---
-      # 1. Middleware to redirect HTTP → HTTPS
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
-
-      # 2. Middleware for Basic Auth
-      - "traefik.http.middlewares.prometheus-auth.basicauth.users=admin:${TRAEFIK_PASSWORD}"
-
-      # --- ROUTER DEFINITIONS ---
-      # 3. HTTP router (non-secure)
-      # This router just catches HTTP and applies the redirect
-      - "traefik.http.routers.prometheus.rule=Host(\"prometheus.${DOMAIN}\")"
+      # ===============================================================
+      # 🌍 HTTP Router (handled automatically by Traefik’s redirect)
+      # ===============================================================
+      - "traefik.http.routers.prometheus.rule=Host(`prometheus.${DOMAIN}`)"
       - "traefik.http.routers.prometheus.entrypoints=web"
-      - "traefik.http.routers.prometheus.middlewares=redirect-to-https"
 
-      # 4. HTTPS router (secure)
-      # This router handles HTTPS, enables TLS, and applies the auth middleware
-      - "traefik.http.routers.prometheus-secure.rule=Host(\"prometheus.${DOMAIN}\")"
+      # ===============================================================
+      # 🔒 HTTPS Secure Router
+      # ===============================================================
+      - "traefik.http.routers.prometheus-secure.rule=Host(`prometheus.${DOMAIN}`)"
       - "traefik.http.routers.prometheus-secure.entrypoints=websecure"
-      - "traefik.http.routers.prometheus-secure.tls=true" 
       - "traefik.http.routers.prometheus-secure.tls.certresolver=${PROVIDER}"
       - "traefik.http.routers.prometheus-secure.service=prometheus-svc"
-      - "traefik.http.routers.prometheus-secure.middlewares=prometheus-auth" # <--applies to 'prometheus-secure
 
-      # 5. Service definition
+      # 👤 Optional: Basic Authentication (unique to Prometheus)
+      - "traefik.http.middlewares.prometheus-auth.basicauth.users=admin:${TRAEFIK_PASSWORD}"
+
+      # 🧩 Apply global secure headers + auth middleware
+      - "traefik.http.routers.prometheus-secure.middlewares=prometheus-auth,secure-headers@docker"
+
+      # ===============================================================
+      # 🧠 Service Definition
+      # ===============================================================
       - "traefik.http.services.prometheus-svc.loadbalancer.server.port=9090"
 
     volumes:

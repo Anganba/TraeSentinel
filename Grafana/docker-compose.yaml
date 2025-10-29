@@ -13,35 +13,41 @@ services:
       - GF_SERVER_HTTP_ADDR=0.0.0.0
       - GF_SERVER_HTTP_PORT=3000
 
-    # ports:
-    #   - "3000:3000"
     volumes:
       - grafana-data:/var/lib/grafana
-      
+
     restart: unless-stopped
     networks:
       - frontend
       - monitoring
+
     labels:
       - "traefik.enable=true"
 
-      # 1. MIDDLEWARE DEFINITION
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true"
-
-      # 2. HTTP router 
-      - "traefik.http.routers.grafana.rule=Host(\"mon.${DOMAIN}\")"
+      # ===============================================================
+      # 🌍 HTTP Router (handled automatically by Traefik redirect)
+      # ===============================================================
+      - "traefik.http.routers.grafana.rule=Host(`mon.${DOMAIN}`)"
       - "traefik.http.routers.grafana.entrypoints=web"
-      - "traefik.http.routers.grafana.middlewares=redirect-to-https"
 
-
-      - "traefik.http.routers.grafana-secure.rule=Host(\"mon.${DOMAIN}\")"
+      # ===============================================================
+      # 🔒 HTTPS Secure Router
+      # ===============================================================
+      - "traefik.http.routers.grafana-secure.rule=Host(`mon.${DOMAIN}`)"
       - "traefik.http.routers.grafana-secure.entrypoints=websecure"
-      - "traefik.http.routers.grafana-secure.tls=true"
       - "traefik.http.routers.grafana-secure.tls.certresolver=${PROVIDER}"
       - "traefik.http.routers.grafana-secure.service=grafana-svc"
 
-      # 4. Internal port mapping
+      # 👤 Optional Basic Auth (if you want to secure Grafana login page)
+      # - "traefik.http.middlewares.grafana-auth.basicauth.users=admin:${TRAEFIK_PASSWORD}"
+      # - "traefik.http.routers.grafana-secure.middlewares=grafana-auth,secure-headers@docker"
+
+      # 🧩 Apply global secure-headers middleware
+      - "traefik.http.routers.grafana-secure.middlewares=secure-headers@docker"
+
+      # ===============================================================
+      # ⚙️ Service Definition
+      # ===============================================================
       - "traefik.http.services.grafana-svc.loadbalancer.server.port=3000"
 
 networks:

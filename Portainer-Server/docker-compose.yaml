@@ -12,22 +12,27 @@ services:
     labels:
       - "traefik.enable=true"
 
-      # HTTP redirect to HTTPS
-      - "traefik.http.routers.portainer.rule=Host(\"portainer.${DOMAIN}\")"
+      # ===============================================================
+      # 🌍 HTTP Router (redirects handled automatically by Traefik)
+      # ===============================================================
+      - "traefik.http.routers.portainer.rule=Host(`portainer.${DOMAIN}`)"
       - "traefik.http.routers.portainer.entrypoints=web"
-      - "traefik.http.routers.portainer.middlewares=redirect-to-https"
 
-      # HTTPS router
-      - "traefik.http.routers.portainer-secure.rule=Host(\"portainer.${DOMAIN}\")"
+      # ===============================================================
+      # 🔒 HTTPS Secure Router
+      # ===============================================================
+      - "traefik.http.routers.portainer-secure.rule=Host(`portainer.${DOMAIN}`)"
       - "traefik.http.routers.portainer-secure.entrypoints=websecure"
       - "traefik.http.routers.portainer-secure.tls.certresolver=${PROVIDER}"
       - "traefik.http.routers.portainer-secure.service=portainer-svc"
 
-      # Tell Traefik to connect to Portainer’s internal HTTP port (9000)
-      - "traefik.http.services.portainer-svc.loadbalancer.server.port=9000"
+      # Apply global middlewares (defined in Traefik)
+      - "traefik.http.routers.portainer-secure.middlewares=secure-headers@docker"
 
-      # Redirect middleware
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      # ===============================================================
+      # 🧩 Portainer Internal Service
+      # ===============================================================
+      - "traefik.http.services.portainer-svc.loadbalancer.server.port=9000"
 
 networks:
   frontend:

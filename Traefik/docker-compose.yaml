@@ -1,4 +1,3 @@
----
 services:
   traefik:
     image: traefik:v3.5.3
@@ -10,74 +9,48 @@ services:
     ports:
       - "80:80"
       - "443:443"
-      # - "8080:8080"
       - "8082:8082"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./data/certs:/var/traefik/certs
-      - ./logs:/var/log/traefik     # 🔹 added: log persistence for Promtail
-
+      - ./logs:/var/log/traefik
     command:
-      # ===============================================================
       # 🔧 Global Settings
-      # ===============================================================
       - "--global.checkNewVersion=false"
       - "--global.sendAnonymousUsage=false"
       - "--log.level=DEBUG"
       - "--api.dashboard=true"
-      #- "--api.insecure=true"
 
-      # ===============================================================
-      # 🌐 EntryPoints
-      # ===============================================================
+      # 🌐 EntryPoints (Auto HTTP → HTTPS Redirect)
       - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
       - "--entrypoints.websecure.address=:443"
       - "--entrypoints.metrics.address=:8082"
 
-      # ===============================================================
-      # 📊 Prometheus Metrics
-      # ===============================================================
+      # 📊 Metrics
       - "--metrics.prometheus=true"
       - "--metrics.prometheus.entryPoint=metrics"
       - "--metrics.prometheus.addEntryPointsLabels=true"
       - "--metrics.prometheus.addRoutersLabels=true"
       - "--metrics.prometheus.addServicesLabels=true"
 
-      # ===============================================================
-      # 🧩 Tempo Tracing Integration
-      # ===============================================================
-      # - "--tracing.serviceName=traefik"
-      # - "--tracing.otlp.grpc.endpoint=tempo:4317"
-      # - "--tracing.otlp.grpc.insecure=true"
-
-      # ===============================================================
-      # 🪵 Access Log Configuration
-      # ===============================================================
+      # 🪵 Logs
       - "--accesslog=true"
       - "--accesslog.format=json"
       - "--accesslog.filepath=/var/log/traefik/access.log"
       - "--accesslog.fields.defaultmode=keep"
       - "--accesslog.fields.headers.defaultmode=keep"
-      - "--accesslog.fields.headers.names.RequestHost=keep"
-      - "--accesslog.fields.headers.names.RequestMethod=keep"
-      - "--accesslog.fields.headers.names.RequestPath=keep"
-      - "--accesslog.fields.headers.names.RequestProtocol=keep"
-      - "--accesslog.fields.headers.names.RequestURI=keep"
-      - "--accesslog.fields.names.traceid=keep"
 
-      # ===============================================================
       # 🐳 Docker Provider
-      # ===============================================================
       - "--providers.docker.endpoint=unix:///var/run/docker.sock"
       - "--providers.docker.exposedbydefault=false"
 
-      # ===============================================================
-      # 🔐 ACME Certificate Resolvers
-      # ===============================================================
+      # 🔐 ACME / Cloudflare
       - "--certificatesresolvers.${PROVIDER}.acme.email=${ACME_EMAIL}"
       - "--certificatesresolvers.${PROVIDER}.acme.storage=/var/traefik/certs/${PROVIDER}-acme.json"
-      - "--certificatesresolvers.${PROVIDER}.acme.caServer=https://acme-v02.api.letsencrypt.org/directory"
       - "--certificatesresolvers.${PROVIDER}.acme.keyType=EC256"
+      - "--certificatesresolvers.${PROVIDER}.acme.caServer=https://acme-v02.api.letsencrypt.org/directory"
       - "--certificatesresolvers.${PROVIDER}.acme.dnsChallenge.provider=${PROVIDER}"
       - "--certificatesresolvers.${PROVIDER}.acme.dnsChallenge.resolvers=1.1.1.1:53,8.8.8.8:53"
 
@@ -89,32 +62,27 @@ services:
       - NAMECHEAP_API_KEY=${NAMECHEAP_API_KEY}
 
     labels:
-      - traefik.enable=true
+      - "traefik.enable=true"
 
-      # ===============================================================
-      # 🌍 HTTP to HTTPS Redirect
-      # ===============================================================
-      - "traefik.http.routers.traefik.rule=Host(`traefik.anganba.me`)"
-      - "traefik.http.routers.traefik.entrypoints=web"
-      - "traefik.http.routers.traefik.middlewares=redirect-to-https"
+      # 🛡️ Secure Headers Middleware (Reusable)
+      - "traefik.http.middlewares.secure-headers.headers.SSLRedirect=true"
+      - "traefik.http.middlewares.secure-headers.headers.browserXSSFilter=true"
+      - "traefik.http.middlewares.secure-headers.headers.contentTypeNosniff=true"
+      - "traefik.http.middlewares.secure-headers.headers.forceSTSHeader=true"
+      - "traefik.http.middlewares.secure-headers.headers.SSLHost=${DOMAIN}"
+      - "traefik.http.middlewares.secure-headers.headers.STSSeconds=31536000"
+      - "traefik.http.middlewares.secure-headers.headers.STSIncludeSubdomains=true"
+      - "traefik.http.middlewares.secure-headers.headers.STSPreload=true"
 
-      # ===============================================================
-      # 🔒 HTTPS Secure Router
-      # ===============================================================
-      - "traefik.http.routers.traefik-secure.rule=Host(`traefik.anganba.me`)"
+      # 🔒 Basic Authentication for Dashboard
+      - "traefik.http.middlewares.traefik-auth.basicauth.users=admin:${TRAEFIK_PASSWORD}"
+
+      # 🌍 HTTPS Router (Dashboard)
+      - "traefik.http.routers.traefik-secure.rule=Host(`traefik.${DOMAIN}`)"
       - "traefik.http.routers.traefik-secure.entrypoints=websecure"
       - "traefik.http.routers.traefik-secure.tls.certresolver=${PROVIDER}"
+      - "traefik.http.routers.traefik-secure.middlewares=traefik-auth,secure-headers@docker"
       - "traefik.http.routers.traefik-secure.service=api@internal"
-
-      # ===============================================================
-      # ↪️ Redirect Middleware
-      # ===============================================================
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
-      # ===============================================================
-      # ↪️ Basic Authentication for Traefik Dashboard
-      # ===============================================================
-      - "traefik.http.middlewares.traefik-auth.basicauth.users=admin:${TRAEFIK_PASSWORD}"
-      - "traefik.http.routers.traefik-secure.middlewares=traefik-auth"
 
 networks:
   frontend:

@@ -1,27 +1,35 @@
 services:
   nginx:
-    container_name: nginx-demo-1
     image: nginx:latest
-    # labels:
-    #   - traefik.enable=true
-
-    #   # HTTP (redirect to HTTPS)
-    #   - traefik.http.routers.nginx-http.rule=Host(`nginx.monitoring.zenexcloud.com`)
-    #   - traefik.http.routers.nginx-http.entrypoints=web
-    #   - traefik.http.routers.nginx-http.middlewares=redirect-to-https
-
-    #   # HTTPS
-    #   - traefik.http.routers.nginx-https.rule=Host(`nginx.monitoring.zenexcloud.com`)
-    #   - traefik.http.routers.nginx-https.entrypoints=websecure
-    #   - traefik.http.routers.nginx-https.tls=true
-    #   - traefik.http.routers.nginx-https.tls.certresolver=${PROVIDER}
-
-    #   # Redirect middleware
-    #   - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
-
+    container_name: nginx-demo-1
+    restart: unless-stopped
     networks:
       - frontend
-    restart: unless-stopped
+
+    labels:
+      - "traefik.enable=true"
+
+      # ===============================================================
+      # 🌍 HTTP Router (Traefik auto-redirects HTTP → HTTPS globally)
+      # ===============================================================
+      - "traefik.http.routers.nginx.rule=Host(`nginx.${DOMAIN}`)"
+      - "traefik.http.routers.nginx.entrypoints=web"
+
+      # ===============================================================
+      # 🔒 HTTPS Secure Router
+      # ===============================================================
+      - "traefik.http.routers.nginx-secure.rule=Host(`nginx.${DOMAIN}`)"
+      - "traefik.http.routers.nginx-secure.entrypoints=websecure"
+      - "traefik.http.routers.nginx-secure.tls.certresolver=${PROVIDER}"
+      - "traefik.http.routers.nginx-secure.service=nginx-svc"
+
+      # 🧩 Apply global secure-headers middleware (already defined in Traefik)
+      - "traefik.http.routers.nginx-secure.middlewares=secure-headers@docker"
+
+      # ===============================================================
+      # ⚙️ Service Definition
+      # ===============================================================
+      - "traefik.http.services.nginx-svc.loadbalancer.server.port=80"
 
 networks:
   frontend:

@@ -1,0 +1,191 @@
+// ===================================================================
+// Unified Alloy Configuration for a Production cPanel Server
+// Combines custom cPanel config with Grafana's "Monitor Linux" guide
+//
+// WARNING: Credentials are hardcoded in this file.
+// ===================================================================
+
+// ===================================================================
+// DEBUGGING UI (From the Grafana Guide)
+// This enables a web UI on http://YOUR_SERVER_IP:12345
+// ===================================================================
+livedebugging {
+  // Empty block is intentional. This enables the UI with defaults.
+}
+
+// ===================================================================
+// METRICS PIPELINE
+// ===================================================================
+
+prometheus.exporter.unix "local_system" {}
+
+// This block relabels the metrics from the exporter above.
+discovery.relabel "relabel_local_system" {
+  targets = prometheus.exporter.unix.local_system.targets
+
+  // Rule 1: Set the "instance" label to the server's hostname
+  rule {
+    target_label = "instance"
+    // This automatically uses the server's FQDN (hostname)
+    replacement  = constants.hostname
+  }
+  // Rule 2: Give the metrics a clean "job" label
+  rule {
+    target_label = "job"
+    replacement  = "cpanel/node"
+  }
+}
+
+// This scrapes the *relabeled* targets.
+prometheus.scrape "scrape_local_system" {
+  targets    = discovery.relabel.relabel_local_system.output
+  forward_to = [prometheus.remote_write.traesentinel_prometheus.receiver]
+}
+
+prometheus.remote_write "traesentinel_prometheus" {
+  endpoint {
+    url = "https://prometheus.anganba.me/api/v1/write"
+    basic_auth {
+      username = "yourusername"
+      password = "yourpassword"
+    }
+  }
+}
+
+//# -------------------------------------------------------------------
+//# Open Port & Process Monitoring (METRICS)
+//# -------------------------------------------------------------------
+prometheus.exporter.process "open_ports_exporter" {
+  procfs_path = "/proc"
+
+  matcher {
+    comm = [".*"]
+  }
+}
+
+discovery.relabel "relabel_open_ports" {
+  targets = prometheus.exporter.process.open_ports_exporter.targets
+
+  rule {
+    target_label = "job"
+    replacement  = "process_exporter"
+  }
+}
+
+prometheus.scrape "scrape_open_ports" {
+  targets    = discovery.relabel.relabel_open_ports.output
+  forward_to = [prometheus.remote_write.traesentinel_prometheus.receiver]
+}
+
+
+// ===================================================================
+// LOGGING PIPELINE (Your custom cPanel/CloudLinux config)
+// ===================================================================
+
+// -------------------------------------------------------------------
+// SOURCE 1: Systemd Journal (The "main" system log)
+// -------------------------------------------------------------------
+loki.source.journal "read_journal" {
+  forward_to = [loki.write.traesentinel_loki.receiver]
+  labels     = {"job" = "system", "app" = "journald"}
+}
+
+
+// -------------------------------------------------------------------
+// SOURCE 2: Web Server Logs (Apache / cPanel)
+// -------------------------------------------------------------------
+local.file_match "web_logs" {
+  path_targets = [
+    { "__path__" = "/var/log/apache2/error_log",  "job" = "web", "app" = "apache_error" },
+    { "__path__" = "/var/log/apache2/stderr.log",   "job" = "web", "app" = "apache_stderr" },
+    { "__path__" = "/var/log/apache2/suexec_log",  "job" = "web", "app" = "apache_suexec" },
+    { "__path__" = "/var/log/apache2/domlogs/*",  "job" = "web", "app" = "domain_access" },
+    { "__path__" = "/var/log/apache2/modsec_audit.log", "job" = "security", "app" = "modsec" },
+    { "__path__" = "/var/log/cpanel-server-traffic/web/traffic-apache.log", "job" = "web", "app" = "apache_traffic" },
+  ]
+}
+
+loki.source.file "read_web_logs" {
+  targets    = local.file_match.web_logs.targets
+  forward_to = [loki.write.traesentinel_loki.receiver]
+}
+
+// -------------------------------------------------------------------
+// SOURCE 3: Mail Server Logs (Exim & Mail)
+// -------------------------------------------------------------------
+local.file_match "mail_logs" {
+  path_targets = [
+    { "__path__" = "/var/log/maillog",         "job" = "mail", "app" = "maillog" },
+    { "__path__" = "/var/log/exim_mainlog",    "job" = "mail", "app" = "exim_main" },
+    { "__path__" = "/var/log/exim_rejectlog",  "job" = "mail", "app" = "exim_reject" },
+  ]
+}
+
+loki.source.file "read_mail_logs" {
+  targets    = local.file_match.mail_logs.targets
+  forward_to = [loki.write.traesentinel_loki.receiver]
+}
+
+// -------------------------------------------------------------------
+// SOURCE 4: Security Logs
+// -------------------------------------------------------------------
+local.file_match "security_logs" {
+  path_targets = [
+    { "__path__" = "/var/log/secure",           "job" = "security", "app" = "secure" },
+    { "__path__" = "/var/log/agent360.log",     "job" = "security", "app" = "imunify360" },
+    { "__path__" = "/var/log/imunify360/*.log", "job" = "security", "app" = "imunify360" },
+    { "__path__" = "/var/log/kcarectl.log",     "job" = "security", "app" = "kernelcare" },
+    { "__path__" = "/var/log/audit/audit.log",  "job" = "security", "app" = "auditd" },
+  ]
+}
+
+loki.source.file "read_security_logs" {
+  targets    = local.file_match.security_logs.targets
+  forward_to = [loki.write.traesentinel_loki.receiver]
+}
+
+// -------------------------------------------------------------------
+// SOURCE 5: System & cPanel Logs
+// -------------------------------------------------------------------
+local.file_match "system_logs" {
+  path_targets = [
+    { "__path__" = "/var/log/cron",                  "job" = "system", "app" = "cron" },
+    { "__path__" = "/var/log/dnf.log",               "job" = "system", "app" = "dnf" },
+    { "__path__" = "/var/log/dnf.rpm.log",           "job" = "system", "app" = "dnf_rpm" },
+    { "__path__" = "/var/log/chkservd.log",          "job" = "cpanel", "app" = "chkservd" },
+    { "__path__" = "/var/log/cloudlinux-summary.log","job" = "system", "app" = "cloudlinux" },
+  ]
+}
+
+loki.source.file "read_system_logs" {
+  targets    = local.file_match.system_logs.targets
+  forward_to = [loki.write.traesentinel_loki.receiver]
+}
+
+// -------------------------------------------------------------------
+// SOURCE 6: Database Logs (MariaDB)
+// -------------------------------------------------------------------
+local.file_match "database_logs" {
+  path_targets = [
+    { "__path__" = "/var/log/mariadb/mariadb.log", "job" = "database", "app" = "mariadb" },
+  ]
+}
+
+loki.source.file "read_database_logs" {
+  targets    = local.file_match.database_logs.targets
+  forward_to = [loki.write.traesentinel_loki.receiver]
+}
+
+
+// -------------------------------------------------------------------
+// DESTINATION: Your Central Loki Server
+// -------------------------------------------------------------------
+loki.write "traesentinel_loki" {
+  endpoint {
+    url = "https://loki.anganba.me/loki/api/v1/push"
+    basic_auth {
+      username = "yourusername"
+      password = "yourpassword"
+    }
+  }
+}

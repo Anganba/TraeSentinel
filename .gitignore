@@ -1,5 +1,7 @@
 Traefik/data/*
 Traefik/.env.cloudflare
+Traefik/.env.namecheap
 Traefik/logs/*
 *.log
 logs/
+Portfolio

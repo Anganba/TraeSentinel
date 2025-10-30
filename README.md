@@ -50,6 +50,31 @@ The script will automatically integrate the new service, attach it to the approp
 
 ---
 
+## 🖼️ Demo Screenshots
+
+Below are some example views from the live stack (replace with your hosted image links when publishing):
+
+### 🔹 Traefik Dashboard  
+![Traefik Dashboard](https://github.com/yourusername/TraeSentinel/assets/demo-traefik-dashboard)
+
+### 🔹 Middleware & Security Headers View  
+![Traefik Middleware](https://github.com/yourusername/TraeSentinel/assets/demo-middleware)
+
+### 🔹 Grafana Custom Dashboard  
+![Grafana Dashboard](https://github.com/yourusername/TraeSentinel/assets/demo-grafana-dashboard)
+
+### 🔹 Loki Dashboard (Logs Aggregation)  
+![Loki Dashboard](https://github.com/yourusername/TraeSentinel/assets/demo-loki-dashboard)
+
+### 🔹 Prometheus Metrics View  
+![Prometheus Metrics](https://github.com/yourusername/TraeSentinel/assets/demo-prometheus-dashboard)
+
+### 🔹 Basic Auth Login Screen (Example for Secured Routes)  
+![Basic Auth UI](https://github.com/yourusername/TraeSentinel/assets/demo-basic-auth)
+
+---
+
+
 
 ## 🚀 Quick Start
 

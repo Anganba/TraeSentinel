@@ -1,246 +1,310 @@
-# TraeSentinel: Automated Reverse Proxy + Monitoring Stack
+# TraeSentinel: Automated Reverse Proxy & Monitoring Stack
 
-A self-contained, modular DevOps stack featuring:
-- 🧬 **Traefik v3** reverse proxy with automatic SSL (ACME)
-- ☁️ DNS automation via **Cloudflare** or **Namecheap**
-- 📊 Full observability: **Grafana**, **Prometheus**, **Node Exporter**, **cAdvisor**
-- 🔧 Managed by a single smart script — `deploy.sh`
-
-Built for **Ubuntu Server 24.04 LTS** and **Docker Compose**.
+A complete **production-ready reverse proxy and observability stack** built using **Traefik v3**, **Docker Compose**, and **Grafana’s monitoring ecosystem** — seamlessly integrating **Cloudflare (default)** or **Namecheap** DNS APIs for automated DNS-based SSL certificates via **Let’s Encrypt (ACME)**.  
+Designed as a **DevOps-grade system** for managing secure HTTPS routing, metrics, logs, and visualization — all automated, modular, and easy to scale.
 
 ---
+
+## 🚀 Overview
+
+This project provides a **secure and observable infrastructure platform** for your containerized applications:
+
+- **Traefik v3** acts as a reverse proxy with automatic SSL, HTTPS redirection, and middleware-based hardening.  
+- **Cloudflare / Namecheap** integration enables zero-downtime SSL management via DNS-01 challenges.  
+- **Grafana + Prometheus + Loki** provide full observability — metrics, logs, and visualization.  
+- **Node Exporter**, **Promtail**, and **cAdvisor** collect and expose system and container metrics.  
+- **Grafana Alloy** extends observability to **remote servers** for distributed environments.  
+- Fully managed with a single, intelligent automation system using `deploy.sh` and `stack.list`.  
+
+> 🧠 Built and tested on **Ubuntu Server 24.04 LTS** using **Docker Compose**, with all services isolated into `frontend` and `monitoring` networks.
+
+---
+
+## 🧩 Intelligent Stack Management with `deploy.sh` + `stack.list`
+
+One of the most powerful features of TraeSentinel is its **modular scaling capability**.  
+The `deploy.sh` script automatically reads from a **stack.list** file, which defines all the Docker Compose stacks to be launched.
+
+Each line in `stack.list` represents a path to a compose file — allowing you to add or remove entire stacks with ease.  
+
+Example:
+```
+Traefik/docker-compose.yaml
+Portainer-Server/docker-compose.yaml
+Prometheus/docker-compose.yaml
+Grafana/docker-compose.yaml
+Loki/docker-compose.yaml
+Promtail/docker-compose.yaml
+```
+To include a new service (e.g., n8n), simply add:
+```
+n8n/docker-compose.yaml
+```
+and redeploy with:
+```bash
+sudo ./deploy.sh up
+```
+The script will automatically integrate the new service, attach it to the appropriate network, and provision SSL via Traefik — no manual edits required.
+
+> 🧩 The combination of `deploy.sh` and `stack.list` makes TraeSentinel **infinitely extensible**, suitable for production or personal DevOps labs.
+
+---
+
 
 ## 🚀 Quick Start
 
 ```bash
+# Clone and enter the repository
 git clone https://github.com/Anganba/TraeSentinel.git
 cd TraeSentinel
+
+# Create required Docker networks
 sudo docker network create frontend
 sudo docker network create monitoring
+
+# Copy the example environment file for your DNS provider
+
+# 👉 For Cloudflare:
+cp Traefik/.env.cloudflare.example Traefik/.env.cloudflare
+# Edit it to include your domain, email, and Cloudflare API token
+
+# 👉 For Namecheap:
+cp Traefik/.env.namecheap.example Traefik/.env.namecheap
+# Edit it to include your Namecheap API credentials
+
+# Make the deploy script executable
 sudo chmod +x deploy.sh
+
+# Deploy using your selected provider
 sudo ./deploy.sh up cloudflare
+# or
+sudo ./deploy.sh up namecheap
 ```
 
-> Default DNS provider: Cloudflare  
-> To switch: `sudo ./deploy.sh up namecheap`
+> TraeSentinel automatically provisions HTTPS, secure headers, and DNS-based SSL certificates.  
+> HTTP is globally redirected to HTTPS using Traefik’s native redirection and middleware.
 
 ---
 
-## 🌐 Services Overview
+### 🌍 Domain & DNS Setup (Required for Cloudflare)
 
-| Service | URL Example | Description |
-|----------|-------------|--------------|
-| Traefik Dashboard | https://traefik.anganba.me | Reverse proxy routing & SSL management |
-| Grafana | https://mon.anganba.me | Visual monitoring & analytics UI |
-| Portainer | https://portainer.anganba.me | Docker web management interface |
-| Prometheus | *internal only* | Metrics collector |
-| Node Exporter / cAdvisor | *internal only* | System & container-level metrics |
+Before starting the stack, make sure your domain DNS records are correctly configured on **Cloudflare**.
 
-All services are automatically networked and secured through Traefik.
+You’ll need to create the following **A records** under your root domain, all pointing to your server’s public IP:
 
----
+| Type | Name | Value | Proxy Status |
+|------|------|--------|---------------|
+| A | traefik | your_server_ip | DNS only |
+| A | mon | your_server_ip | DNS only |
+| A | portainer | your_server_ip | DNS only |
+| A | prometheus | your_server_ip | DNS only |
+| A | loki | your_server_ip | DNS only |
 
-## 📦 Deployment Script
-
-`deploy.sh` provides lifecycle management for the full TraeSentinel stack:
-
-```bash
-sudo ./deploy.sh up        # Start the full stack
-sudo ./deploy.sh down      # Stop all containers
-sudo ./deploy.sh restart   # Restart everything
-sudo ./deploy.sh status    # Show container health summary
-```
-
-### Script Behavior
-- Detects **Docker**, **Docker Compose**, or **Podman Compose** automatically.
-- Loads each stack from `stack.list` dynamically.
-- Supports provider-specific `.env` files for Cloudflare and Namecheap.
-- Prints colored, timestamped logs for clarity.
+> ⚠️ Make sure **Proxy Status** is set to **“DNS only”**, not proxied (the gray cloud icon).  
+> This allows Let’s Encrypt (ACME) to validate your DNS records via the DNS-01 challenge.
 
 ---
 
-## ⚙️ Configuration
+## 🧱 Stack Overview
 
-### DNS Provider Environment Files
-
-#### **Cloudflare** (`Traefik/.env.cloudflare`)
-```env
-PROVIDER=cloudflare
-ACME_EMAIL=info@yourdomain
-CF_DNS_API_TOKEN=your_cloudflare_token
-```
-
-#### **Namecheap** (`Traefik/.env.namecheap`)
-```env
-PROVIDER=namecheap
-ACME_EMAIL=info@yourdomain
-NAMECHEAP_API_USER=your_user
-NAMECHEAP_API_KEY=your_key
-NAMECHEAP_API_URL=https://api.namecheap.com/xml.response
-```
-
-Each `.env` file defines your ACME certificate resolver and API credentials.
+| Component | Role | Access URL |
+|------------|------|------------|
+| **Traefik Dashboard** | Reverse proxy, SSL & routing control | `https://traefik.anganba.me` |
+| **Grafana** | Visualization and alerting hub | `https://mon.anganba.me` |
+| **Prometheus** | Metrics collector backend | Internal only |
+| **Loki** | Centralized logs from all containers | Internal only |
+| **Portainer** | Docker management UI | `https://portainer.anganba.me` |
+| **Node Exporter** | Host-level metrics exporter | Internal only |
+| **cAdvisor** | Container metrics exporter | Internal only |
+| **Promtail** | Log shipper to Loki | Internal only |
+| **Grafana Alloy** | Remote monitoring agent for external targets | Deployed separately |
 
 ---
 
-## 🔍 Monitoring Stack
+## 🔐 Security by Default
 
-The monitoring suite lives entirely in the private `monitoring` Docker network.
+TraeSentinel ships with secure, hardened defaults:
+- Automatic HTTP → HTTPS redirection
+- `secure-headers` middleware applied globally (HSTS, XSS filter, content-type nosniff)
+- TLS certificates auto-issued via DNS-01 challenge (Cloudflare or Namecheap)
+- Optional Basic Auth middleware for dashboards
 
-### Prometheus
-- Collects metrics from Traefik, cAdvisor, Node Exporter, and others.
-- **No public ports exposed**.
-- Scrape configuration examples:
+Example Traefik security labels:
 
 ```yaml
-scrape_configs:
-  - job_name: "traefik"
-    static_configs:
-      - targets: ["traefik:8080"]
-
-  - job_name: "node_exporter"
-    static_configs:
-      - targets: ["node-exporter:9100"]
-
-  - job_name: "cadvisor"
-    static_configs:
-      - targets: ["cadvisor:8080"]
-```
-
-### Grafana
-- Connects internally to Prometheus: `http://prometheus:9090`
-- Default admin credentials:
-  ```bash
-  admin / changeme
-  ```
-- Accessible at `https://mon.anganba.me`
-
-### Node Exporter
-- Provides OS-level metrics (CPU, memory, disks).
-- Runs in `host` PID mode for system visibility.
-
-### cAdvisor
-- Collects container-level metrics directly from Docker.
-- Accessible internally via `cadvisor:8080/metrics`.
-
----
-
-## 🛠️ Traefik Configuration
-
-Traefik handles:
-- Dynamic reverse proxy routing
-- Automatic Let's Encrypt or Cloudflare SSL certificates
-- Middleware for HTTPS redirection and authentication
-
-**Entrypoints:**
-```yaml
---entrypoints.web.address=:80
---entrypoints.websecure.address=:443
---entrypoints.metrics.address=:8080
-```
-
-**Metrics:**
-```yaml
---metrics.prometheus=true
---metrics.prometheus.entryPoint=metrics
-```
-
-**Routers & Services Example (Grafana)**
-```yaml
-labels:
-  - "traefik.enable=true"
-  - "traefik.http.routers.grafana.rule=Host(`mon.anganba.me`)"
-  - "traefik.http.routers.grafana.entrypoints=websecure"
-  - "traefik.http.routers.grafana.tls.certresolver=${PROVIDER}"
-  - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+- "traefik.http.middlewares.secure-headers.headers.STSSeconds=31536000"
+- "traefik.http.middlewares.secure-headers.headers.STSIncludeSubdomains=true"
+- "traefik.http.middlewares.secure-headers.headers.STSPreload=true"
 ```
 
 ---
 
-## 🛡️ Security Model
+## 🧠 Monitoring Architecture
 
-- Traefik is the only publicly exposed entry point (ports 80 & 443).
-- Prometheus, Node Exporter, and cAdvisor remain internal.
-- HTTPS enforced for all external routes.
-- Cloudflare or Namecheap API-driven SSL (ACME DNS-01 challenge).
+### **Grafana + Prometheus + Loki**
 
-### Optional Hardening
-- Restrict access to dashboards using basic auth:
-  ```yaml
-  - "traefik.http.middlewares.auth.basicauth.users=admin:$$apr1$$hash..."
-  ```
-- Enable firewall rules for Docker bridge networks.
+Together they form the backbone of TraeSentinel’s observability layer:
+- Prometheus scrapes metrics from Traefik, Node Exporter, cAdvisor, and Alloy.
+- Loki aggregates logs collected by Promtail.
+- Grafana visualizes metrics and logs through unified dashboards.
+
+### **Grafana Dashboards**
+
+Your custom dashboards are located in:
+```
+Grafana_Dashboards/
+```
+
+You can import them into Grafana manually:
+1. Go to **Grafana → Dashboards → Import**.
+2. Upload the JSON file from `Grafana_Dashboards/`.
+3. Set the data source to **Prometheus**.
+4. Save — your tailored monitoring views are ready.
 
 ---
 
-## 🔊 Troubleshooting
+## 🧩 Node & Container Metrics
 
-### TLS/ACME Failures
-- Check DNS provider credentials (`.env` file)
-- Ensure the A-record resolves to your VPS IP
-- Confirm `acme.json` permissions: `chmod 600 Traefik/data/acme.json`
+| Exporter | Purpose | Data Source |
+|-----------|----------|--------------|
+| **Node Exporter** | CPU, RAM, Disk, IO, Network metrics | Host system |
+| **cAdvisor** | Container-level stats | Docker runtime |
+| **Promtail** | Log collection | Local Docker & system logs |
 
-### DNS Propagation
+These are automatically discovered by Prometheus in the internal `monitoring` network.
+
+---
+
+## 🌐 Grafana Alloy: External Target Monitoring
+
+TraeSentinel supports **Grafana Alloy**, the new unified agent for collecting metrics, logs, and traces from remote servers.
+
+### 📘 Official Documentation  
+Follow Grafana’s setup guide:  
+👉 [Grafana Alloy Installation Guide](https://grafana.com/docs/alloy/latest/set-up/install/)
+
+### 🧭 Integration Steps (for external targets)
+1. **Install Grafana Alloy** on your remote host using the link above.
+2. Configure Alloy to scrape local system metrics and send them to your main TraeSentinel server:
+   - Point its Prometheus remote_write URL to your Prometheus endpoint (internal or via VPN/tunnel).
+   - Configure Loki logs endpoint (optional).
+3. Restart Alloy and confirm that metrics appear in Grafana under your configured dashboard.
+
+> ⚡ Tip: You can reuse `Grafana_Alloy/config.alloy` as a reference configuration for your targets.
+
+---
+
+## 🧰 Management Commands
+
 ```bash
-dig +short monitor.anganba.me
+sudo ./deploy.sh up          # Start the full stack
+sudo ./deploy.sh down        # Stop all containers
+sudo ./deploy.sh restart     # Restart everything
+sudo ./deploy.sh status      # Show container health summary
 ```
 
-### Service Health
-```bash
-sudo ./deploy.sh status
-```
-or directly:
-```bash
-docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-```
-
-### Debugging ACME
-```bash
-docker logs traefik | grep acme
-```
+`deploy.sh` automatically:
+- Detects Docker / Podman Compose
+- Loads provider-specific environment files
+- Dynamically composes all services listed in `stack.list`
+- Prints colored logs with timestamps
 
 ---
 
 ## 🛠️ System Requirements
-- Ubuntu Server 24.04 LTS (or equivalent)
-- Docker Engine >= 27
-- Docker Compose >= 2.23
-- Minimum 2GB RAM, 2 vCPU
+
+| Resource | Minimum |
+|-----------|----------|
+| OS | Ubuntu Server 24.04 LTS |
+| RAM | 2 GB |
+| vCPUs | 2 |
+| Disk | 10 GB+ (SSD recommended) |
+| Docker | ≥ 27 |
+| Docker Compose | ≥ 2.23 |
 
 ---
 
-## 🖊️ Repository Structure
+## 🗂️ Project Structure
+
 ```
 TraeSentinel/
 ├── Traefik/
 │   ├── docker-compose.yml
-│   ├── .env.cloudflare
-│   ├── .env.namecheap
-│   └── data/
-├── Monitoring/
-│   ├── prometheus/
-│   ├── grafana/
-│   ├── cadvisor/
-│   └── node-exporter/
+│   ├── .env.cloudflare.example
+│   ├── .env.namecheap.example
+│   ├── data/
+│   └── logs/
+│
+├── Grafana/
+│   ├── docker-compose.yml
+│   └── Grafana_Dashboards/
+│
+├── Grafana_Alloy/
+│   └── config.alloy
+│
+├── Prometheus/
+│   ├── docker-compose.yml
+│   └── config/
+│
+├── Loki/
+│   └── config/
+│
+├── node-exporter/
+├── cadvisor/
+├── Portainer-Server/
+├── Promtail/
+├── Tempo/
 ├── deploy.sh
 ├── stack.list
-├── README.md
-├── docs/
-│   ├── DEPLOYMENT_GUIDE.md
-│   └── ARCHITECTURE_OVERVIEW.md
-└── LICENSE
+├── LICENSE
+└── README.md
 ```
 
 ---
 
-## 🗪️ License
-**MIT License**  
-For educational and demonstration use.
+## 🔎 Troubleshooting
+
+### SSL or DNS Issues
+```bash
+docker logs traefik | grep acme
+```
+Ensure your `.env` file credentials and domain names are correct.
+
+### DNS Check
+```bash
+dig +short mon.anganba.me
+```
+
+### Check Service Health
+```bash
+sudo ./deploy.sh status
+```
+
+### Permission Fix (ACME)
+```bash
+chmod 600 Traefik/data/*.json
+```
 
 ---
 
-## 👨‍💻 Author
-**Anganba Singha**  
-DevOps | Linux Server Administration | Cybersecurity Enthusiast  
-📧 anganba.sananu@gmail.com
+## 🧤 Security Recommendations
 
+- Change default credentials in Grafana (`admin / changeme`).
+- Protect Traefik and Portainer dashboards using BasicAuth.
+- Enable UFW or firewalld rules for `80` and `443` only.
+- Use Cloudflare Access or reverse VPN for production-grade isolation.
+
+---
+
+## 🪄 Credits & License
+
+**License:** MIT  
+Developed by **Anganba Singha**  
+DevOps | Linux | Cloud Infrastructure | Security  
+
+📧 anganba.sananu@gmail.com  
+🌐 [Grafana Alloy Docs](https://grafana.com/docs/alloy/latest/set-up/install/)
+
+---
+
+⭐ *If you find TraeSentinel helpful, star the repo and share your dashboards!*

@@ -14,16 +14,16 @@ This project provides a **secure and observable infrastructure platform** for yo
 - **Grafana + Prometheus + Loki** provide full observability — metrics, logs, and visualization.  
 - **Node Exporter**, **Promtail**, and **cAdvisor** collect and expose system and container metrics.  
 - **Grafana Alloy** extends observability to **remote servers** for distributed environments.  
-- Fully managed with a single, intelligent automation system using `deploy.sh` and `stack.list`.  
+- Fully managed with a single, intelligent automation system using `deploy_v2.sh` and `stack.list`.  
 
 > 🧠 Built and tested on **Ubuntu Server 24.04 LTS** using **Docker Compose**, with all services isolated into `frontend` and `monitoring` networks.
 
 ---
 
-## 🧩 Intelligent Stack Management with `deploy.sh` + `stack.list`
+## 🧩 Intelligent Stack Management with `deploy_v2.sh` + `stack.list`
 
 One of the most powerful features of TraeSentinel is its **modular scaling capability**.  
-The `deploy.sh` script automatically reads from a **stack.list** file, which defines all the Docker Compose stacks to be launched.
+The `deploy_v2.sh` script automatically reads from a **stack.list** file, which defines all the Docker Compose stacks to be launched.
 
 Each line in `stack.list` represents a path to a compose file — allowing you to add or remove entire stacks with ease.  
 
@@ -42,11 +42,11 @@ n8n/docker-compose.yaml
 ```
 and redeploy with:
 ```bash
-sudo ./deploy.sh up
+sudo ./deploy_v2.sh up
 ```
 The script will automatically integrate the new service, attach it to the appropriate network, and provision SSL via Traefik — no manual edits required.
 
-> 🧩 The combination of `deploy.sh` and `stack.list` makes TraeSentinel **infinitely extensible**, suitable for production or personal DevOps labs.
+> 🧩 The combination of `deploy_v2.sh` and `stack.list` makes TraeSentinel **infinitely extensible**, suitable for production or personal DevOps labs.
 
 ---
 
@@ -98,12 +98,12 @@ cp Traefik/.env.namecheap.example Traefik/.env.namecheap
 # Edit it to include your Namecheap API credentials
 
 # Make the deploy script executable
-sudo chmod +x deploy.sh
+sudo chmod +x deploy_v2.sh
 
 # Deploy using your selected provider
-sudo ./deploy.sh up cloudflare
+sudo ./deploy_v2.sh up cloudflare
 # or
-sudo ./deploy.sh up namecheap
+sudo ./deploy_v2.sh up namecheap
 ```
 
 > TraeSentinel automatically provisions HTTPS, secure headers, and DNS-based SSL certificates.  
@@ -222,13 +222,13 @@ Follow Grafana’s setup guide:
 ## 🧰 Management Commands
 
 ```bash
-sudo ./deploy.sh up          # Start the full stack
-sudo ./deploy.sh down        # Stop all containers
-sudo ./deploy.sh restart     # Restart everything
-sudo ./deploy.sh status      # Show container health summary
+sudo ./deploy_v2.sh up          # Start the full stack
+sudo ./deploy_v2.sh down        # Stop all containers
+sudo ./deploy_v2.sh restart     # Restart everything
+sudo ./deploy_v2.sh status      # Show container health summary
 ```
 
-`deploy.sh` automatically:
+`deploy_v2.sh` automatically:
 - Detects Docker / Podman Compose
 - Loads provider-specific environment files
 - Dynamically composes all services listed in `stack.list`
@@ -302,7 +302,7 @@ dig +short mon.anganba.me
 
 ### Check Service Health
 ```bash
-sudo ./deploy.sh status
+sudo ./deploy_v2.sh status
 ```
 
 ### Permission Fix (ACME)

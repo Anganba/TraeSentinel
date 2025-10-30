@@ -55,22 +55,22 @@ The script will automatically integrate the new service, attach it to the approp
 Below are some example views from the live stack (replace with your hosted image links when publishing):
 
 ### 🔹 Traefik Dashboard  
-![Traefik Dashboard](https://github.com/yourusername/TraeSentinel/assets/demo-traefik-dashboard)
+![Traefik Dashboard](https://github.com/Anganba/ImagesHostedOnGitHub/blob/38dd5f3e902a524244135b31eb477f56a65c3cbd/TraeSentinel_Assets/TraeSentinel_TraefikDashboard.png)
 
 ### 🔹 Middleware & Security Headers View  
-![Traefik Middleware](https://github.com/yourusername/TraeSentinel/assets/demo-middleware)
+![Traefik Middleware](https://github.com/Anganba/ImagesHostedOnGitHub/blob/38dd5f3e902a524244135b31eb477f56a65c3cbd/TraeSentinel_Assets/TraeSentinel_Middleware.png)
 
 ### 🔹 Grafana Custom Dashboard  
-![Grafana Dashboard](https://github.com/yourusername/TraeSentinel/assets/demo-grafana-dashboard)
+![Grafana Dashboard](https://github.com/Anganba/ImagesHostedOnGitHub/blob/38dd5f3e902a524244135b31eb477f56a65c3cbd/TraeSentinel_Assets/TraeSentinel_GrafanaCustomDashboard.png)
 
 ### 🔹 Loki Dashboard (Logs Aggregation)  
-![Loki Dashboard](https://github.com/yourusername/TraeSentinel/assets/demo-loki-dashboard)
+![Loki Dashboard](https://github.com/Anganba/ImagesHostedOnGitHub/blob/1c1f79c8e0a761fab35d808ccdab94c99bcaf5ae/TraeSentinel_Assets/TraeSentinel_LokiDashboard.png)
 
-### 🔹 Prometheus Metrics View  
-![Prometheus Metrics](https://github.com/yourusername/TraeSentinel/assets/demo-prometheus-dashboard)
+### 🔹 Prometheus Metrics Query View  
+![Prometheus Metrics](https://github.com/Anganba/ImagesHostedOnGitHub/blob/1c1f79c8e0a761fab35d808ccdab94c99bcaf5ae/TraeSentinel_Assets/TraeSentinel_Prometheus.png)
 
 ### 🔹 Basic Auth Login Screen (Example for Secured Routes)  
-![Basic Auth UI](https://github.com/yourusername/TraeSentinel/assets/demo-basic-auth)
+![Basic Auth UI](https://github.com/Anganba/ImagesHostedOnGitHub/blob/1c1f79c8e0a761fab35d808ccdab94c99bcaf5ae/TraeSentinel_Assets/TraeSentinel_BasicAuth.png)
 
 ---
 
@@ -279,7 +279,7 @@ TraeSentinel/
 ├── Portainer-Server/
 ├── Promtail/
 ├── Tempo/
-├── deploy.sh
+├── deploy_v2.sh
 ├── stack.list
 ├── LICENSE
 └── README.md

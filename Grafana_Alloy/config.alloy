@@ -19,35 +19,49 @@ livedebugging {
 
 prometheus.exporter.unix "local_system" {}
 
-// This block relabels the metrics from the exporter above.
+
+
+// -------------------------------------------------------------------
+// Relabel local system metrics with hostname and static IP
+// -------------------------------------------------------------------
 discovery.relabel "relabel_local_system" {
+  // 🔹 REQUIRED: define which targets this relabel uses
   targets = prometheus.exporter.unix.local_system.targets
 
-  // Rule 1: Set the "instance" label to the server's hostname
+  // Add hostname as "instance"
   rule {
     target_label = "instance"
-    // This automatically uses the server's FQDN (hostname)
     replacement  = constants.hostname
   }
-  // Rule 2: Give the metrics a clean "job" label
+
+  // Add static IP label for identification
+  rule {
+    target_label = "ip_address"
+    replacement  = "103.149.105.106"
+  }
+
+  // Define the job label
   rule {
     target_label = "job"
     replacement  = "cpanel/node"
   }
 }
 
-// This scrapes the *relabeled* targets.
+// -------------------------------------------------------------------
+// Prometheus scrape configuration for local system metrics
+// -------------------------------------------------------------------
 prometheus.scrape "scrape_local_system" {
   targets    = discovery.relabel.relabel_local_system.output
   forward_to = [prometheus.remote_write.traesentinel_prometheus.receiver]
 }
 
+
 prometheus.remote_write "traesentinel_prometheus" {
   endpoint {
     url = "https://prometheus.anganba.me/api/v1/write"
     basic_auth {
-      username = "yourusername"
-      password = "yourpassword"
+      username = "username"
+      password = "password"
     }
   }
 }
@@ -184,8 +198,8 @@ loki.write "traesentinel_loki" {
   endpoint {
     url = "https://loki.anganba.me/loki/api/v1/push"
     basic_auth {
-      username = "yourusername"
-      password = "yourpassword"
+      username = "username"
+      password = "password"
     }
   }
 }

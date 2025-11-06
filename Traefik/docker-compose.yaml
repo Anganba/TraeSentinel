@@ -23,10 +23,15 @@ services:
 
       # 🌐 EntryPoints (Auto HTTP → HTTPS Redirect)
       - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.forwardedHeaders.insecure=true" 
       - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
       - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
       - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.websecure.forwardedHeaders.insecure=true"
       - "--entrypoints.metrics.address=:8082"
+ 
+
+
 
       # 📊 Metrics
       - "--metrics.prometheus=true"

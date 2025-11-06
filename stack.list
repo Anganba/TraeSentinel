@@ -6,3 +6,4 @@ cadvisor/docker-compose.yaml
 Loki/docker-compose.yaml
 Promtail/docker-compose.yaml
 node-exporter/docker-compose.yaml
+n8n/docker-compose.yaml

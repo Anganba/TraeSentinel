@@ -1,16 +1,18 @@
 // ===================================================================
-// Unified Alloy Configuration for a Production cPanel Server
-// Combines custom cPanel config with Grafana's "Monitor Linux" guide
+// Unified Alloy Configuration for Ubuntu Server (Multi-Host Ready)
+// Includes auditd, auth, syslog, nginx, APT logs, Prometheus metrics
 //
-// WARNING: Credentials are hardcoded in this file.
+// Metrics -> Prometheus: https://prometheus.anganba.me
+// Logs    -> Loki:       https://loki.anganba.me
+//
+// Each host automatically adds an "instance" label from constants.hostname
 // ===================================================================
 
 // ===================================================================
-// DEBUGGING UI (From the Grafana Guide)
-// This enables a web UI on http://YOUR_SERVER_IP:12345
+// DEBUGGING UI
 // ===================================================================
 livedebugging {
-  // Empty block is intentional. This enables the UI with defaults.
+  // Empty block enables the default UI
 }
 
 // ===================================================================
@@ -19,42 +21,32 @@ livedebugging {
 
 prometheus.exporter.unix "local_system" {}
 
-
-
 // -------------------------------------------------------------------
 // Relabel local system metrics with hostname and static IP
 // -------------------------------------------------------------------
 discovery.relabel "relabel_local_system" {
-  // 🔹 REQUIRED: define which targets this relabel uses
   targets = prometheus.exporter.unix.local_system.targets
 
-  // Add hostname as "instance"
   rule {
     target_label = "instance"
     replacement  = constants.hostname
   }
 
-  // Add static IP label for identification
   rule {
     target_label = "ip_address"
-    replacement  = "103.149.105.106"
+    replacement  = "HOST_IP"   // change this per host if needed
   }
 
-  // Define the job label
   rule {
     target_label = "job"
-    replacement  = "cpanel/node"
+    replacement  = "ubuntu/node"
   }
 }
 
-// -------------------------------------------------------------------
-// Prometheus scrape configuration for local system metrics
-// -------------------------------------------------------------------
 prometheus.scrape "scrape_local_system" {
   targets    = discovery.relabel.relabel_local_system.output
   forward_to = [prometheus.remote_write.traesentinel_prometheus.receiver]
 }
-
 
 prometheus.remote_write "traesentinel_prometheus" {
   endpoint {
@@ -66,9 +58,9 @@ prometheus.remote_write "traesentinel_prometheus" {
   }
 }
 
-//# -------------------------------------------------------------------
-//# Open Port & Process Monitoring (METRICS)
-//# -------------------------------------------------------------------
+// -------------------------------------------------------------------
+// Process / Port Monitoring
+// -------------------------------------------------------------------
 prometheus.exporter.process "open_ports_exporter" {
   procfs_path = "/proc"
 
@@ -91,108 +83,155 @@ prometheus.scrape "scrape_open_ports" {
   forward_to = [prometheus.remote_write.traesentinel_prometheus.receiver]
 }
 
-
 // ===================================================================
-// LOGGING PIPELINE (Your custom cPanel/CloudLinux config)
+// LOGGING PIPELINE
 // ===================================================================
 
 // -------------------------------------------------------------------
-// SOURCE 1: Systemd Journal (The "main" system log)
+// GLOBAL RELABEL: inject instance=<hostname> into all logs
+// -------------------------------------------------------------------
+loki.relabel "add_instance_to_all_logs" {
+  forward_to = [loki.write.traesentinel_loki.receiver]
+
+  rule {
+    target_label = "instance"
+    replacement  = constants.hostname
+  }
+}
+
+// -------------------------------------------------------------------
+// SOURCE 1: Systemd Journal
 // -------------------------------------------------------------------
 loki.source.journal "read_journal" {
-  forward_to = [loki.write.traesentinel_loki.receiver]
+  forward_to = [loki.relabel.add_instance_to_all_logs.receiver]
   labels     = {"job" = "system", "app" = "journald"}
 }
 
-
 // -------------------------------------------------------------------
-// SOURCE 2: Web Server Logs (Apache / cPanel)
+// SOURCE 2: Web Server Logs (nginx)
 // -------------------------------------------------------------------
 local.file_match "web_logs" {
   path_targets = [
-    { "__path__" = "/var/log/apache2/error_log",  "job" = "web", "app" = "apache_error" },
-    { "__path__" = "/var/log/apache2/stderr.log",   "job" = "web", "app" = "apache_stderr" },
-    { "__path__" = "/var/log/apache2/suexec_log",  "job" = "web", "app" = "apache_suexec" },
-    { "__path__" = "/var/log/apache2/domlogs/*",  "job" = "web", "app" = "domain_access" },
-    { "__path__" = "/var/log/apache2/modsec_audit.log", "job" = "security", "app" = "modsec" },
-    { "__path__" = "/var/log/cpanel-server-traffic/web/traffic-apache.log", "job" = "web", "app" = "apache_traffic" },
+    { "__path__" = "/var/log/nginx/access.log", "job" = "web", "app" = "nginx_access" },
+    { "__path__" = "/var/log/nginx/error.log",  "job" = "web", "app" = "nginx_error" },
   ]
 }
 
 loki.source.file "read_web_logs" {
   targets    = local.file_match.web_logs.targets
-  forward_to = [loki.write.traesentinel_loki.receiver]
+  forward_to = [loki.relabel.add_instance_to_all_logs.receiver]
 }
 
 // -------------------------------------------------------------------
-// SOURCE 3: Mail Server Logs (Exim & Mail)
-// -------------------------------------------------------------------
-local.file_match "mail_logs" {
-  path_targets = [
-    { "__path__" = "/var/log/maillog",         "job" = "mail", "app" = "maillog" },
-    { "__path__" = "/var/log/exim_mainlog",    "job" = "mail", "app" = "exim_main" },
-    { "__path__" = "/var/log/exim_rejectlog",  "job" = "mail", "app" = "exim_reject" },
-  ]
-}
-
-loki.source.file "read_mail_logs" {
-  targets    = local.file_match.mail_logs.targets
-  forward_to = [loki.write.traesentinel_loki.receiver]
-}
-
-// -------------------------------------------------------------------
-// SOURCE 4: Security Logs
+// SOURCE 3: Security Logs (auditd + SSH + authentication)
 // -------------------------------------------------------------------
 local.file_match "security_logs" {
   path_targets = [
-    { "__path__" = "/var/log/secure",           "job" = "security", "app" = "secure" },
-    { "__path__" = "/var/log/agent360.log",     "job" = "security", "app" = "imunify360" },
-    { "__path__" = "/var/log/imunify360/*.log", "job" = "security", "app" = "imunify360" },
-    { "__path__" = "/var/log/kcarectl.log",     "job" = "security", "app" = "kernelcare" },
-    { "__path__" = "/var/log/audit/audit.log",  "job" = "security", "app" = "auditd" },
+    { "__path__" = "/var/log/auth.log",         "job" = "security", "app" = "auth" },
   ]
 }
 
 loki.source.file "read_security_logs" {
   targets    = local.file_match.security_logs.targets
-  forward_to = [loki.write.traesentinel_loki.receiver]
+  forward_to = [loki.relabel.add_instance_to_all_logs.receiver]
 }
 
 // -------------------------------------------------------------------
-// SOURCE 5: System & cPanel Logs
+// SOURCE 4: System Logs (syslog + kernel)
 // -------------------------------------------------------------------
 local.file_match "system_logs" {
   path_targets = [
-    { "__path__" = "/var/log/cron",                  "job" = "system", "app" = "cron" },
-    { "__path__" = "/var/log/dnf.log",               "job" = "system", "app" = "dnf" },
-    { "__path__" = "/var/log/dnf.rpm.log",           "job" = "system", "app" = "dnf_rpm" },
-    { "__path__" = "/var/log/chkservd.log",          "job" = "cpanel", "app" = "chkservd" },
-    { "__path__" = "/var/log/cloudlinux-summary.log","job" = "system", "app" = "cloudlinux" },
+    { "__path__" = "/var/log/syslog",   "job" = "system", "app" = "syslog" },
+    { "__path__" = "/var/log/kern.log", "job" = "system", "app" = "kernel" },
   ]
 }
 
 loki.source.file "read_system_logs" {
   targets    = local.file_match.system_logs.targets
-  forward_to = [loki.write.traesentinel_loki.receiver]
+  forward_to = [loki.relabel.add_instance_to_all_logs.receiver]
 }
 
 // -------------------------------------------------------------------
-// SOURCE 6: Database Logs (MariaDB)
+// SOURCE 5: Mail Logs
 // -------------------------------------------------------------------
-local.file_match "database_logs" {
+local.file_match "mail_logs" {
   path_targets = [
-    { "__path__" = "/var/log/mariadb/mariadb.log", "job" = "database", "app" = "mariadb" },
+    { "__path__" = "/var/log/mail.log", "job" = "mail", "app" = "mail" },
   ]
 }
 
-loki.source.file "read_database_logs" {
-  targets    = local.file_match.database_logs.targets
-  forward_to = [loki.write.traesentinel_loki.receiver]
+loki.source.file "read_mail_logs" {
+  targets    = local.file_match.mail_logs.targets
+  forward_to = [loki.relabel.add_instance_to_all_logs.receiver]
+}
+
+// -------------------------------------------------------------------
+// SOURCE 6: APT / Package Manager Logs
+// -------------------------------------------------------------------
+local.file_match "apt_logs" {
+  path_targets = [
+    { "__path__" = "/var/log/apt/history.log", "job" = "system", "app" = "apt_history" },
+    { "__path__" = "/var/log/apt/term.log",    "job" = "system", "app" = "apt_term" },
+  ]
+}
+
+loki.source.file "read_apt_logs" {
+  targets    = local.file_match.apt_logs.targets
+  forward_to = [loki.relabel.add_instance_to_all_logs.receiver]
+}
+
+// -------------------------------------------------------------------
+// SOURCE 7: Auditd itself
+// -------------------------------------------------------------------
+local.file_match "auditd_logs" {
+  path_targets = [
+    { "__path__" = "/var/log/audit/audit.log", "job" = "security", "app" = "auditd" },
+  ]
+}
+
+loki.source.file "read_auditd_logs" {
+  targets    = local.file_match.auditd_logs.targets
+  forward_to = [loki.process.auditd_pipeline.receiver]
+}
+
+// -------------------------------------------------------------------
+// PARSE + MULTILINE PIPELINE FOR AUDITD
+// -------------------------------------------------------------------
+loki.process "auditd_pipeline" {
+  stage.multiline {
+    firstline     = "type="
+    max_wait_time = "1s"
+  }
+
+  stage.regex {
+    expression = "type=(?P<type>[^ ]+) msg=audit\\((?P<timestamp>[0-9.]+):(?P<seq>[0-9]+)\\): (?P<message>.*)"
+  }
+
+
+  stage.labels {
+    values = {
+      job       = "",
+      app       = "",
+      type      = "",
+    }
+  }
+
+  forward_to = [loki.relabel.drop_high_cardinality.receiver]
+}
+
+loki.relabel "drop_high_cardinality" {
+  forward_to = [loki.relabel.add_instance_to_all_logs.receiver]
+
+  rule {
+    action = "labeldrop"
+    regex  = "inode|dev|fd|mode|rdev|ouid|ogid|item|nametype|cap_.*"
+  }
 }
 
 
+
 // -------------------------------------------------------------------
-// DESTINATION: Your Central Loki Server
+// DESTINATION: Central Loki Server
 // -------------------------------------------------------------------
 loki.write "traesentinel_loki" {
   endpoint {

@@ -26,7 +26,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 26,
+  "id": 30,
   "links": [
     {
       "$$hashKey": "object:2300",
@@ -1148,7 +1148,7 @@
       },
       "gridPos": {
         "h": 7,
-        "w": 3,
+        "w": 2,
         "x": 0,
         "y": 7
       },
@@ -1325,7 +1325,7 @@
             "properties": [
               {
                 "id": "custom.width",
-                "value": 85
+                "value": 160
               }
             ]
           }
@@ -1333,8 +1333,8 @@
       },
       "gridPos": {
         "h": 7,
-        "w": 3,
-        "x": 3,
+        "w": 4,
+        "x": 2,
         "y": 7
       },
       "id": 211,
@@ -5911,7 +5911,7 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 13,
         "x": 0,
         "y": 62
       },
@@ -5936,12 +5936,220 @@
           },
           "direction": "backward",
           "editorMode": "code",
-          "expr": "{host=\"${HOSTNAME}\"} |~ \"failed|failure|error|invalid\" ",
+          "expr": "{job=\"security\", app=\"auth\", instance=\"$instance\"} |= \"Failed\"",
           "queryType": "range",
           "refId": "A"
         }
       ],
-      "title": "SSH Error Logs",
+      "title": "SSH Error Logs | $instance",
+      "type": "logs"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "cf1tmad60r668a"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 11,
+        "x": 13,
+        "y": 62
+      },
+      "id": 213,
+      "options": {
+        "dedupStrategy": "none",
+        "enableInfiniteScrolling": false,
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": true,
+        "showTime": false,
+        "sortOrder": "Descending",
+        "wrapLogMessage": false
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "cf1tmad60r668a"
+          },
+          "direction": "backward",
+          "editorMode": "code",
+          "expr": "{app=\"auth\", job=\"security\", instance=\"$instance\"} |= \"Accepted password\"",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "SSH Accepted Logs | $instance",
+      "type": "logs"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "cf1tmad60r668a"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 70
+      },
+      "id": 212,
+      "options": {
+        "dedupStrategy": "none",
+        "enableInfiniteScrolling": false,
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": true,
+        "showTime": false,
+        "sortOrder": "Descending",
+        "wrapLogMessage": false
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "cf1tmad60r668a"
+          },
+          "direction": "backward",
+          "editorMode": "code",
+          "expr": "{job=\"web\", app=\"nginx_access\",instance=\"$instance\"}",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Nginx Logs",
+      "type": "logs"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "cf1tmad60r668a"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 77
+      },
+      "id": 214,
+      "options": {
+        "dedupStrategy": "none",
+        "enableInfiniteScrolling": false,
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": true,
+        "showTime": false,
+        "sortOrder": "Descending",
+        "wrapLogMessage": false
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "cf1tmad60r668a"
+          },
+          "direction": "backward",
+          "editorMode": "code",
+          "expr": "{job=\"security\", app=\"auditd\",instance=\"$instance\"}",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Auditd Logs",
+      "type": "logs"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "cf1tmad60r668a"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 84
+      },
+      "id": 215,
+      "options": {
+        "dedupStrategy": "none",
+        "enableInfiniteScrolling": false,
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": true,
+        "showLabels": true,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": false
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "cf1tmad60r668a"
+          },
+          "direction": "backward",
+          "editorMode": "code",
+          "expr": "{job=\"security\", app=\"auditd\",instance=\"$instance\"}",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Auditd Logs",
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": {
+            "delimiter": ",",
+            "format": "regexp",
+            "keepTime": false,
+            "regExp": "type=(?P<type>\\w+)|name=\"(?P<name>[^\"]+)\"|exe=\"(?P<exe>[^\"]+)\"|comm=\"(?P<comm>[^\"]+)\"|uid=(?P<uid>\\d+)|auid=(?P<auid>\\d+)|success=(?P<success>\\w+)",
+            "replace": false,
+            "source": "Line"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Line": false,
+              "NewField": true,
+              "Time": false,
+              "audit(1763372101.391": false,
+              "id": false,
+              "labelTypes": false,
+              "msg": false,
+              "tsNs": true
+            },
+            "includeByName": {},
+            "indexByName": {},
+            "orderByMode": "auto",
+            "renameByName": {}
+          }
+        }
+      ],
       "type": "logs"
     }
   ],
@@ -6048,8 +6256,8 @@
       },
       {
         "current": {
-          "text": "anganba",
-          "value": "anganba"
+          "text": "vault.zenexcloud.com",
+          "value": "vault.zenexcloud.com"
         },
         "datasource": {
           "type": "prometheus",
@@ -6250,7 +6458,7 @@
     ]
   },
   "time": {
-    "from": "now-30m",
+    "from": "now-6h",
     "to": "now"
   },
   "timepicker": {
@@ -6264,7 +6472,7 @@
     ]
   },
   "timezone": "browser",
-  "title": "Live Server Monitor Overview - Anganba",
-  "uid": "StarsL-TenSunS-node",
-  "version": 89
+  "title": "Live Server Monitor Overview - R&D",
+  "uid": "addzlk9",
+  "version": 1
 }

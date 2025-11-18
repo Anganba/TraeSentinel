@@ -1,96 +1,106 @@
-services:
-  traefik:
-    image: traefik:v3.5.3
-    container_name: traefik
-    restart: unless-stopped
-    networks:
-      - frontend
-      - monitoring
-    ports:
-      - "80:80"
-      - "443:443"
-      - "8082:8082"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./data/certs:/var/traefik/certs
-      - ./logs:/var/log/traefik
-    command:
-      # 🔧 Global Settings
-      - "--global.checkNewVersion=false"
-      - "--global.sendAnonymousUsage=false"
-      - "--log.level=DEBUG"
-      - "--api.dashboard=true"
+  services:
+    traefik:
+      image: traefik:v3.5.3
+      container_name: traefik
+      restart: unless-stopped
+      networks:
+        - frontend
+        - monitoring
+      ports:
+        - "80:80"
+        - "443:443"
+        - "8082:8082"
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock:ro
+        - ./data/certs:/var/traefik/certs
+        - ./logs:/var/log/traefik
+      command:
+        # 🔧 Global Settings
+        - "--global.checkNewVersion=false"
+        - "--global.sendAnonymousUsage=false"
+        - "--log.level=DEBUG"
+        - "--api.dashboard=true"
 
-      # 🌐 EntryPoints (Auto HTTP → HTTPS Redirect)
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.web.forwardedHeaders.insecure=true" 
-      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
-      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
-      - "--entrypoints.websecure.address=:443"
-      - "--entrypoints.websecure.forwardedHeaders.insecure=true"
-      - "--entrypoints.metrics.address=:8082"
- 
+        # 🌐 EntryPoints (Auto HTTP → HTTPS Redirect)
+        - "--entrypoints.web.address=:80"
+        - "--entrypoints.web.forwardedHeaders.insecure=true" 
+        - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+        - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+        - "--entrypoints.websecure.address=:443"
+        - "--entrypoints.websecure.forwardedHeaders.insecure=true"
+        - "--entrypoints.metrics.address=:8082"
+  
+        - "--experimental.plugins.crowdsec-bouncer.modulename=github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin"
+        # 👇 I used v1.4.2, but you can update this to v1.4.5 from your image
+        - "--experimental.plugins.crowdsec-bouncer.version=v1.4.5"
 
 
+        # 📊 Metrics
+        - "--metrics.prometheus=true"
+        - "--metrics.prometheus.entryPoint=metrics"
+        - "--metrics.prometheus.addEntryPointsLabels=true"
+        - "--metrics.prometheus.addRoutersLabels=true"
+        - "--metrics.prometheus.addServicesLabels=true"
 
-      # 📊 Metrics
-      - "--metrics.prometheus=true"
-      - "--metrics.prometheus.entryPoint=metrics"
-      - "--metrics.prometheus.addEntryPointsLabels=true"
-      - "--metrics.prometheus.addRoutersLabels=true"
-      - "--metrics.prometheus.addServicesLabels=true"
+        # 🪵 Logs
+        - "--accesslog=true"
+        - "--accesslog.format=json"
+        - "--accesslog.filepath=/var/log/traefik/access.log"
+        - "--accesslog.fields.defaultmode=keep"
+        - "--accesslog.fields.headers.defaultmode=keep"
 
-      # 🪵 Logs
-      - "--accesslog=true"
-      - "--accesslog.format=json"
-      - "--accesslog.filepath=/var/log/traefik/access.log"
-      - "--accesslog.fields.defaultmode=keep"
-      - "--accesslog.fields.headers.defaultmode=keep"
+        # 🐳 Docker Provider
+        - "--providers.docker.endpoint=unix:///var/run/docker.sock"
+        - "--providers.docker.exposedbydefault=false"
 
-      # 🐳 Docker Provider
-      - "--providers.docker.endpoint=unix:///var/run/docker.sock"
-      - "--providers.docker.exposedbydefault=false"
+        # 🔐 ACME / Cloudflare
+        - "--certificatesresolvers.${PROVIDER}.acme.email=${ACME_EMAIL}"
+        - "--certificatesresolvers.${PROVIDER}.acme.storage=/var/traefik/certs/${PROVIDER}-acme.json"
+        - "--certificatesresolvers.${PROVIDER}.acme.keyType=EC256"
+        - "--certificatesresolvers.${PROVIDER}.acme.caServer=https://acme-v02.api.letsencrypt.org/directory"
+        - "--certificatesresolvers.${PROVIDER}.acme.dnsChallenge.provider=${PROVIDER}"
+        - "--certificatesresolvers.${PROVIDER}.acme.dnsChallenge.resolvers=1.1.1.1:53,8.8.8.8:53"
 
-      # 🔐 ACME / Cloudflare
-      - "--certificatesresolvers.${PROVIDER}.acme.email=${ACME_EMAIL}"
-      - "--certificatesresolvers.${PROVIDER}.acme.storage=/var/traefik/certs/${PROVIDER}-acme.json"
-      - "--certificatesresolvers.${PROVIDER}.acme.keyType=EC256"
-      - "--certificatesresolvers.${PROVIDER}.acme.caServer=https://acme-v02.api.letsencrypt.org/directory"
-      - "--certificatesresolvers.${PROVIDER}.acme.dnsChallenge.provider=${PROVIDER}"
-      - "--certificatesresolvers.${PROVIDER}.acme.dnsChallenge.resolvers=1.1.1.1:53,8.8.8.8:53"
+      environment:
+        - PROVIDER=${PROVIDER}
+        - ACME_EMAIL=${ACME_EMAIL}
+        - CF_DNS_API_TOKEN=${CF_DNS_API_TOKEN}
+        - NAMECHEAP_API_USER=${NAMECHEAP_API_USER}
+        - NAMECHEAP_API_KEY=${NAMECHEAP_API_KEY}
 
-    environment:
-      - PROVIDER=${PROVIDER}
-      - ACME_EMAIL=${ACME_EMAIL}
-      - CF_DNS_API_TOKEN=${CF_DNS_API_TOKEN}
-      - NAMECHEAP_API_USER=${NAMECHEAP_API_USER}
-      - NAMECHEAP_API_KEY=${NAMECHEAP_API_KEY}
+      labels:
+        - "traefik.enable=true"
 
-    labels:
-      - "traefik.enable=true"
+        # 🛡️ Secure Headers Middleware (Reusable)
+        - "traefik.http.middlewares.secure-headers.headers.SSLRedirect=true"
+        - "traefik.http.middlewares.secure-headers.headers.browserXSSFilter=true"
+        - "traefik.http.middlewares.secure-headers.headers.contentTypeNosniff=true"
+        - "traefik.http.middlewares.secure-headers.headers.forceSTSHeader=true"
+        - "traefik.http.middlewares.secure-headers.headers.SSLHost=${DOMAIN}"
+        - "traefik.http.middlewares.secure-headers.headers.STSSeconds=31536000"
+        - "traefik.http.middlewares.secure-headers.headers.STSIncludeSubdomains=true"
+        - "traefik.http.middlewares.secure-headers.headers.STSPreload=true"
 
-      # 🛡️ Secure Headers Middleware (Reusable)
-      - "traefik.http.middlewares.secure-headers.headers.SSLRedirect=true"
-      - "traefik.http.middlewares.secure-headers.headers.browserXSSFilter=true"
-      - "traefik.http.middlewares.secure-headers.headers.contentTypeNosniff=true"
-      - "traefik.http.middlewares.secure-headers.headers.forceSTSHeader=true"
-      - "traefik.http.middlewares.secure-headers.headers.SSLHost=${DOMAIN}"
-      - "traefik.http.middlewares.secure-headers.headers.STSSeconds=31536000"
-      - "traefik.http.middlewares.secure-headers.headers.STSIncludeSubdomains=true"
-      - "traefik.http.middlewares.secure-headers.headers.STSPreload=true"
 
-      # 🔒 Basic Authentication for Dashboard
-      - "traefik.http.middlewares.traefik-auth.basicauth.users=admin:${TRAEFIK_PASSWORD}"
+        # 🔒 Basic Authentication for Dashboard
+        - "traefik.http.middlewares.traefik-auth.basicauth.users=admin:${TRAEFIK_PASSWORD}"
 
-      # 🌍 HTTPS Router (Dashboard)
-      - "traefik.http.routers.traefik-secure.rule=Host(`traefik.${DOMAIN}`)"
-      - "traefik.http.routers.traefik-secure.entrypoints=websecure"
-      - "traefik.http.routers.traefik-secure.tls.certresolver=${PROVIDER}"
-      - "traefik.http.routers.traefik-secure.middlewares=traefik-auth,secure-headers@docker"
-      - "traefik.http.routers.traefik-secure.service=api@internal"
+        # 🌍 HTTPS Router (Dashboard)
+        - "traefik.http.routers.traefik-secure.rule=Host(`traefik.${DOMAIN}`)"
+        - "traefik.http.routers.traefik-secure.entrypoints=websecure"
+        - "traefik.http.routers.traefik-secure.tls.certresolver=${PROVIDER}"
+        - "traefik.http.routers.traefik-secure.middlewares=traefik-auth,secure-headers@docker"
+        - "traefik.http.routers.traefik-secure.service=api@internal"
 
-networks:
-  frontend:
-    external: true
-  monitoring:
-    external: true
+        # 👇 We named our middleware "crowdsec"
+        - "traefik.http.middlewares.crowdsec.plugin.crowdsec-bouncer.crowdseclapikey=qg9ZNH/EduDz8OhkznDBgwPAAXKk2rKrHnrMNphwSZ4"
+        # 👇 This part is CRITICAL for Docker and missing from the image
+        - "traefik.http.middlewares.crowdsec.plugin.crowdsec-bouncer.crowdseclapihost=crowdsec:8080"
+        # 👇 We correctly set it to "true" to enable the plugin
+        - "traefik.http.middlewares.crowdsec.plugin.crowdsec-bouncer.enabled=true"
+
+  networks:
+    frontend:
+      external: true
+    monitoring:
+      external: true

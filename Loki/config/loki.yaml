@@ -25,10 +25,17 @@ schema_config:
         prefix: index_
         period: 24h
 
+compactor:
+  working_directory: /loki/boltdb-shipper-compactor
+  delete_request_store: filesystem    # <--- ADD THIS LINE
+  retention_enabled: true             # <--- This is the switch that enables deletion
+  retention_delete_delay: 2h          # Safety buffer before permanent delete
+  retention_delete_worker_count: 150
+# ==========================================
+
 limits_config:
   # NOTE: Data Retention is set to 7 days.
-  #       This is the default value and can be changed
-  retention_period: 168h
+  retention_period: 168h   # This is 7 days (Good!)
   ingestion_rate_mb: 4
   ingestion_burst_size_mb: 6
   max_streams_per_user: 10000

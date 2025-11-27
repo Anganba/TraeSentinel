@@ -43,7 +43,7 @@ services:
       # - "traefik.http.routers.grafana-secure.middlewares=grafana-auth,secure-headers@docker"
 
       # 🧩 Apply global secure-headers middleware
-      - "traefik.http.routers.grafana-secure.middlewares=secure-headers@docker"
+      - "traefik.http.routers.grafana-secure.middlewares=secure-headers@docker,crowdsec,global-ratelimit@docker,my-inflight@docker"
 
       # ===============================================================
       # ⚙️ Service Definition

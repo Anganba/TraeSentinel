@@ -8,8 +8,8 @@ services:
     container_name: prometheus
     command:
       - --config.file=/etc/prometheus/prometheus.yaml
-      - --storage.tsdb.retention.time=7d
-      - --storage.tsdb.retention.size=2GB
+      - --storage.tsdb.retention.time=10d
+      - --storage.tsdb.retention.size=5GB
       - --web.enable-remote-write-receiver
       - --log.level=debug
     # ports:

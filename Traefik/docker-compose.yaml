@@ -29,6 +29,13 @@
         - "--entrypoints.websecure.address=:443"
         - "--entrypoints.websecure.forwardedHeaders.insecure=true"
         - "--entrypoints.metrics.address=:8082"
+        # ⚡ Only allow modern, fast encryption (Drops old bots instantly)
+        #- "--entrypoints.websecure.http.tls.options.default.minVersion=VersionTLS12"
+  
+        # 📉 Limit the number of connections per IP (as discussed before)
+        #- "--entrypoints.websecure.transport.respondingtimeouts.readtimeout=100"
+        #- "--entrypoints.websecure.transport.respondingtimeouts.writetimeout=100"
+        #- "--entrypoints.websecure.transport.respondingtimeouts.idletimeout=100"
   
         - "--experimental.plugins.crowdsec-bouncer.modulename=github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin"
         # 👇 I used v1.4.2, but you can update this to v1.4.5 from your image
@@ -84,12 +91,18 @@
 
         # 🔒 Basic Authentication for Dashboard
         - "traefik.http.middlewares.traefik-auth.basicauth.users=admin:${TRAEFIK_PASSWORD}"
+        # Rate Limiting Middleware
+        - "traefik.http.middlewares.global-ratelimit.ratelimit.average=100"  
+        - "traefik.http.middlewares.global-ratelimit.ratelimit.burst=50" 
+        # ✈️ InFlightReq: Only allow 10 simultaneous connections per IP
+        - "traefik.http.middlewares.my-inflight.inflightreq.amount=100"
+        - "traefik.http.middlewares.my-inflight.inflightreq.sourcecriterion.ipstrategy.depth=1"    
 
         # 🌍 HTTPS Router (Dashboard)
         - "traefik.http.routers.traefik-secure.rule=Host(`traefik.${DOMAIN}`)"
         - "traefik.http.routers.traefik-secure.entrypoints=websecure"
         - "traefik.http.routers.traefik-secure.tls.certresolver=${PROVIDER}"
-        - "traefik.http.routers.traefik-secure.middlewares=traefik-auth,secure-headers@docker"
+        - "traefik.http.routers.traefik-secure.middlewares=traefik-auth,secure-headers@docker,crowdsec,global-ratelimit@docker,my-inflight@docker"
         - "traefik.http.routers.traefik-secure.service=api@internal"
 
         # 👇 We named our middleware "crowdsec"

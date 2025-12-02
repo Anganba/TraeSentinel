@@ -675,7 +675,7 @@
         ]
       },
       "gridPos": {
-        "h": 6,
+        "h": 7,
         "w": 24,
         "x": 0,
         "y": 1
@@ -1150,7 +1150,7 @@
         "h": 7,
         "w": 2,
         "x": 0,
-        "y": 7
+        "y": 8
       },
       "id": 200,
       "options": {
@@ -1335,7 +1335,7 @@
         "h": 7,
         "w": 4,
         "x": 2,
-        "y": 7
+        "y": 8
       },
       "id": 211,
       "options": {
@@ -1537,7 +1537,7 @@
         "h": 7,
         "w": 6,
         "x": 6,
-        "y": 7
+        "y": 8
       },
       "id": 191,
       "maxDataPoints": 100,
@@ -1564,7 +1564,7 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "sum(node_load5{vendor=~\"$vendor\",account=~\"$account\",group=~\"$group\",name=~\".*$sname.*\",name=~\"$name\"})",
+          "expr": "sum(node_load5{vendor=~\"$vendor\",account=~\"$account\",group=~\"$group\",name=~\".*$sname.*\",instance=\"$instance\",name=~\"$name\"})",
           "format": "time_series",
           "hide": false,
           "interval": "",
@@ -1581,7 +1581,7 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "count(node_cpu_seconds_total{vendor=~\"$vendor\",account=~\"$account\",group=~\"$group\",name=~\"$name\",name=~\".*$sname.*\",mode='system'})",
+          "expr": "count(node_cpu_seconds_total{vendor=~\"$vendor\",account=~\"$account\",group=~\"$group\",name=~\"$name\",name=~\".*$sname.*\",instance=\"$instance\",mode='system'})",
           "format": "time_series",
           "hide": false,
           "instant": false,
@@ -1598,7 +1598,7 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "avg(1 - avg(irate(node_cpu_seconds_total{vendor=~\"$vendor\",account=~\"$account\",group=~\"$group\",name=~\"$name\",name=~\".*$sname.*\",mode=\"idle\"}[$interval])) by (instance)) * 100",
+          "expr": "avg(1 - avg(irate(node_cpu_seconds_total{vendor=~\"$vendor\",account=~\"$account\",group=~\"$group\",name=~\"$name\",name=~\".*$sname.*\",instance=\"$instance\",mode=\"idle\"}[$interval])) by (instance)) * 100",
           "format": "time_series",
           "hide": false,
           "interval": "",
@@ -1609,7 +1609,7 @@
           "step": 240
         }
       ],
-      "title": "Overall CPU Usage",
+      "title": "Overall CPU Usage | $instance",
       "type": "timeseries"
     },
     {
@@ -1755,7 +1755,7 @@
         "h": 7,
         "w": 6,
         "x": 12,
-        "y": 7
+        "y": 8
       },
       "id": 195,
       "maxDataPoints": 100,
@@ -1782,7 +1782,7 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "sum(node_memory_MemTotal_bytes{vendor=~\"$vendor\",account=~\"$account\",group=~\"$group\",name=~\"$name\",name=~\".*$sname.*\"} - node_memory_MemAvailable_bytes{vendor=~\"$vendor\",account=~\"$account\",group=~\"$group\",name=~\"$name\",name=~\".*$sname.*\"})",
+          "expr": "sum(node_memory_MemTotal_bytes{vendor=~\"$vendor\",account=~\"$account\",group=~\"$group\",instance=\"$instance\",name=~\"$name\",name=~\".*$sname.*\"} - node_memory_MemAvailable_bytes{vendor=~\"$vendor\",account=~\"$account\",group=~\"$group\",instance=\"$instance\",name=~\"$name\",name=~\".*$sname.*\"})",
           "format": "time_series",
           "hide": false,
           "interval": "",
@@ -1797,8 +1797,9 @@
             "type": "prometheus",
             "uid": "ff1m717ghscn4d"
           },
+          "editorMode": "code",
           "exemplar": true,
-          "expr": "sum(node_memory_MemTotal_bytes{vendor=~\"$vendor\",account=~\"$account\",group=~\"$group\",name=~\"$name\",name=~\".*$sname.*\"})",
+          "expr": "sum(node_memory_MemTotal_bytes{vendor=~\"$vendor\",account=~\"$account\",group=~\"$group\",instance=\"$instance\",name=~\"$name\",name=~\".*$sname.*\"})",
           "format": "time_series",
           "hide": false,
           "instant": false,
@@ -1815,7 +1816,7 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "(sum(node_memory_MemTotal_bytes{vendor=~\"$vendor\",account=~\"$account\",group=~\"$group\",name=~\"$name\",name=~\".*$sname.*\"} - node_memory_MemAvailable_bytes{vendor=~\"$vendor\",account=~\"$account\",group=~\"$group\",name=~\"$name\",name=~\".*$sname.*\"}) / sum(node_memory_MemTotal_bytes{vendor=~\"$vendor\",account=~\"$account\",group=~\"$group\",name=~\"$name\",name=~\".*$sname.*\"}))*100",
+          "expr": "(sum(node_memory_MemTotal_bytes{vendor=~\"$vendor\",account=~\"$account\",group=~\"$group\",instance=\"$instance\",name=~\"$name\",name=~\".*$sname.*\"} - node_memory_MemAvailable_bytes{vendor=~\"$vendor\",account=~\"$account\",group=~\"$group\",instance=\"$instance\",name=~\"$name\",name=~\".*$sname.*\"}) / sum(node_memory_MemTotal_bytes{vendor=~\"$vendor\",account=~\"$account\",group=~\"$group\",instance=\"$instance\",name=~\"$name\",name=~\".*$sname.*\"}))*100",
           "format": "time_series",
           "hide": false,
           "interval": "",
@@ -1825,7 +1826,7 @@
           "refId": "H"
         }
       ],
-      "title": "Overall Memory Usage",
+      "title": "Overall Memory Usage | $instance",
       "type": "timeseries"
     },
     {
@@ -1971,7 +1972,7 @@
         "h": 7,
         "w": 6,
         "x": 18,
-        "y": 7
+        "y": 8
       },
       "id": 197,
       "maxDataPoints": 100,
@@ -1996,8 +1997,9 @@
             "type": "prometheus",
             "uid": "ff1m717ghscn4d"
           },
+          "editorMode": "code",
           "exemplar": true,
-          "expr": "sum(avg(node_filesystem_size_bytes{vendor=~\"$vendor\",account=~\"$account\",group=~\"$group\",name=~\"$name\",name=~\".*$sname.*\",fstype=~\"xfs|ext.*\"})by(device,instance)) - sum(avg(node_filesystem_free_bytes{vendor=~\"$vendor\",account=~\"$account\",group=~\"$group\",name=~\"$name\",name=~\".*$sname.*\",fstype=~\"xfs|ext.*\"})by(device,instance))",
+          "expr": "sum(avg(node_filesystem_size_bytes{vendor=~\"$vendor\",account=~\"$account\",group=~\"$group\",instance=\"$instance\",name=~\"$name\",name=~\".*$sname.*\",fstype=~\"xfs|ext.*\"})by(device,instance)) - sum(avg(node_filesystem_free_bytes{vendor=~\"$vendor\",account=~\"$account\",group=~\"$group\",instance=\"$instance\",name=~\"$name\",name=~\".*$sname.*\",fstype=~\"xfs|ext.*\"})by(device,instance))",
           "format": "time_series",
           "instant": false,
           "interval": "",
@@ -2010,8 +2012,9 @@
             "type": "prometheus",
             "uid": "ff1m717ghscn4d"
           },
+          "editorMode": "code",
           "exemplar": true,
-          "expr": "sum(avg(node_filesystem_size_bytes{vendor=~\"$vendor\",account=~\"$account\",group=~\"$group\",name=~\"$name\",name=~\".*$sname.*\",fstype=~\"xfs|ext.*\"})by(device,instance))",
+          "expr": "sum(avg(node_filesystem_size_bytes{vendor=~\"$vendor\",account=~\"$account\",group=~\"$group\",instance=\"$instance\",name=~\"$name\",name=~\".*$sname.*\",fstype=~\"xfs|ext.*\"})by(device,instance))",
           "format": "time_series",
           "instant": false,
           "interval": "",
@@ -2026,7 +2029,7 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "(sum(avg(node_filesystem_size_bytes{vendor=~\"$vendor\",account=~\"$account\",group=~\"$group\",name=~\"$name\",name=~\".*$sname.*\",fstype=~\"xfs|ext.*\"})by(device,instance)) - sum(avg(node_filesystem_free_bytes{vendor=~\"$vendor\",account=~\"$account\",group=~\"$group\",name=~\"$name\",name=~\".*$sname.*\",fstype=~\"xfs|ext.*\"})by(device,instance))) *100/(sum(avg(node_filesystem_avail_bytes{vendor=~\"$vendor\",account=~\"$account\",group=~\"$group\",name=~\"$name\",name=~\".*$sname.*\",fstype=~\"xfs|ext.*\"})by(device,instance))+(sum(avg(node_filesystem_size_bytes{vendor=~\"$vendor\",account=~\"$account\",group=~\"$group\",name=~\"$name\",name=~\".*$sname.*\",fstype=~\"xfs|ext.*\"})by(device,instance)) - sum(avg(node_filesystem_free_bytes{vendor=~\"$vendor\",account=~\"$account\",group=~\"$group\",name=~\"$name\",name=~\".*$sname.*\",fstype=~\"xfs|ext.*\"})by(device,instance))))",
+          "expr": "(sum(avg(node_filesystem_size_bytes{vendor=~\"$vendor\",account=~\"$account\",group=~\"$group\",instance=\"$instance\",name=~\"$name\",name=~\".*$sname.*\",fstype=~\"xfs|ext.*\"})by(device,instance)) - sum(avg(node_filesystem_free_bytes{vendor=~\"$vendor\",account=~\"$account\",group=~\"$group\",instance=\"$instance\",name=~\"$name\",name=~\".*$sname.*\",fstype=~\"xfs|ext.*\"})by(device,instance))) *100/(sum(avg(node_filesystem_avail_bytes{vendor=~\"$vendor\",account=~\"$account\",group=~\"$group\",instance=\"$instance\",name=~\"$name\",name=~\".*$sname.*\",fstype=~\"xfs|ext.*\"})by(device,instance))+(sum(avg(node_filesystem_size_bytes{vendor=~\"$vendor\",account=~\"$account\",group=~\"$group\",instance=\"$instance\",name=~\"$name\",name=~\".*$sname.*\",fstype=~\"xfs|ext.*\"})by(device,instance)) - sum(avg(node_filesystem_free_bytes{vendor=~\"$vendor\",account=~\"$account\",group=~\"$group\",instance=\"$instance\",name=~\"$name\",name=~\".*$sname.*\",fstype=~\"xfs|ext.*\"})by(device,instance))))",
           "format": "time_series",
           "instant": false,
           "interval": "",
@@ -2035,7 +2038,7 @@
           "refId": "A"
         }
       ],
-      "title": "Overall Disk Usage",
+      "title": "Overall Disk Usage | $instance",
       "type": "timeseries"
     },
     {
@@ -2044,7 +2047,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 14
+        "y": 15
       },
       "id": 189,
       "panels": [],
@@ -2243,7 +2246,7 @@
         "h": 6,
         "w": 8,
         "x": 0,
-        "y": 15
+        "y": 16
       },
       "id": 181,
       "links": [
@@ -2402,7 +2405,7 @@
         "h": 6,
         "w": 4,
         "x": 8,
-        "y": 15
+        "y": 16
       },
       "id": 177,
       "options": {
@@ -2677,7 +2680,7 @@
         "h": 6,
         "w": 5,
         "x": 12,
-        "y": 15
+        "y": 16
       },
       "id": 206,
       "interval": "15s",
@@ -3052,7 +3055,7 @@
         "h": 6,
         "w": 7,
         "x": 17,
-        "y": 15
+        "y": 16
       },
       "id": 183,
       "options": {
@@ -3254,7 +3257,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 21
+        "y": 22
       },
       "id": 207,
       "options": {
@@ -3513,7 +3516,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 21
+        "y": 22
       },
       "id": 156,
       "options": {
@@ -3701,7 +3704,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 21
+        "y": 22
       },
       "id": 174,
       "options": {
@@ -3896,7 +3899,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 29
+        "y": 30
       },
       "id": 13,
       "options": {
@@ -4120,7 +4123,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 29
+        "y": 30
       },
       "id": 202,
       "options": {
@@ -4348,7 +4351,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 29
+        "y": 30
       },
       "id": 16,
       "options": {
@@ -4567,7 +4570,7 @@
         "h": 8,
         "w": 6,
         "x": 0,
-        "y": 37
+        "y": 38
       },
       "id": 160,
       "options": {
@@ -4788,7 +4791,7 @@
         "h": 8,
         "w": 6,
         "x": 6,
-        "y": 37
+        "y": 38
       },
       "id": 161,
       "options": {
@@ -4995,7 +4998,7 @@
         "h": 8,
         "w": 6,
         "x": 12,
-        "y": 37
+        "y": 38
       },
       "id": 168,
       "options": {
@@ -5341,7 +5344,7 @@
         "h": 8,
         "w": 6,
         "x": 18,
-        "y": 37
+        "y": 38
       },
       "id": 175,
       "options": {
@@ -5493,7 +5496,7 @@
         "h": 8,
         "w": 16,
         "x": 0,
-        "y": 45
+        "y": 46
       },
       "id": 158,
       "options": {
@@ -5786,7 +5789,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 45
+        "y": 46
       },
       "id": 157,
       "options": {
@@ -5849,7 +5852,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 53
+        "y": 54
       },
       "id": 209,
       "panels": [],
@@ -5869,7 +5872,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 54
+        "y": 55
       },
       "id": 208,
       "options": {
@@ -5913,7 +5916,7 @@
         "h": 8,
         "w": 13,
         "x": 0,
-        "y": 62
+        "y": 63
       },
       "id": 210,
       "options": {
@@ -5957,7 +5960,7 @@
         "h": 8,
         "w": 11,
         "x": 13,
-        "y": 62
+        "y": 63
       },
       "id": 213,
       "options": {
@@ -6001,7 +6004,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 70
+        "y": 71
       },
       "id": 212,
       "options": {
@@ -6029,7 +6032,7 @@
           "refId": "A"
         }
       ],
-      "title": "Nginx Logs",
+      "title": "Nginx Logs | $instance",
       "type": "logs"
     },
     {
@@ -6045,7 +6048,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 77
+        "y": 78
       },
       "id": 214,
       "options": {
@@ -6089,7 +6092,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 84
+        "y": 85
       },
       "id": 215,
       "options": {
@@ -6256,8 +6259,8 @@
       },
       {
         "current": {
-          "text": "vault.zenexcloud.com",
-          "value": "vault.zenexcloud.com"
+          "text": "monitoring.zenexcloud.com",
+          "value": "monitoring.zenexcloud.com"
         },
         "datasource": {
           "type": "prometheus",
@@ -6300,8 +6303,8 @@
       },
       {
         "current": {
-          "text": "3",
-          "value": "3"
+          "text": "4",
+          "value": "4"
         },
         "datasource": {
           "type": "prometheus",
@@ -6474,5 +6477,5 @@
   "timezone": "browser",
   "title": "Live Server Monitor Overview - R&D",
   "uid": "addzlk9",
-  "version": 1
+  "version": 6
 }

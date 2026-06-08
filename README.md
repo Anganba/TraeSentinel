@@ -61,8 +61,8 @@ Below are some example views from the live stack (replace with your hosted image
 ![Traefik Middleware](https://github.com/Anganba/ImagesHostedOnGitHub/blob/38dd5f3e902a524244135b31eb477f56a65c3cbd/TraeSentinel_Assets/TraeSentinel_Middleware.png)
 
 ### 🔹 Grafana Custom Dashboard  
-![Grafana Dashboard](https://github.com/Anganba/ImagesHostedOnGitHub/blob/38dd5f3e902a524244135b31eb477f56a65c3cbd/TraeSentinel_Assets/TraeSentinel_GrafanaCustomDashboard.png)
-
+![Grafana Dashboard1](https://github.com/Anganba/ImagesHostedOnGitHub/blob/38dd5f3e902a524244135b31eb477f56a65c3cbd/TraeSentinel_Assets/TraeSentinel_GrafanaCustomDashboard.png)
+![Grafana Dashboard2](https://github.com/Anganba/ImagesHostedOnGitHub/blob/38dd5f3e902a524244135b31eb477f56a65c3cbd/TraeSentinel_Assets/TraeSentinel_TraefikDashboard.png)
 ### 🔹 Loki Dashboard (Logs Aggregation)  
 ![Loki Dashboard](https://github.com/Anganba/ImagesHostedOnGitHub/blob/1c1f79c8e0a761fab35d808ccdab94c99bcaf5ae/TraeSentinel_Assets/TraeSentinel_LokiDashboard.png)
 

@@ -62,7 +62,8 @@ Below are some example views from the live stack (replace with your hosted image
 
 ### 🔹 Grafana Custom Dashboard  
 ![Grafana Dashboard1](https://github.com/Anganba/ImagesHostedOnGitHub/blob/38dd5f3e902a524244135b31eb477f56a65c3cbd/TraeSentinel_Assets/TraeSentinel_GrafanaCustomDashboard.png)
-![Grafana Dashboard2](https://github.com/Anganba/ImagesHostedOnGitHub/blob/38dd5f3e902a524244135b31eb477f56a65c3cbd/TraeSentinel_Assets/TraeSentinel_TraefikDashboard.png)
+![Grafana Dashboard2](https://github.com/Anganba/ImagesHostedOnGitHub/blob/b596f15328964c008f7dfc950648140310b41cf2/TraeSentinel_Assets/TraeSentinel_CDashboard.jpg)
+
 ### 🔹 Loki Dashboard (Logs Aggregation)  
 ![Loki Dashboard](https://github.com/Anganba/ImagesHostedOnGitHub/blob/1c1f79c8e0a761fab35d808ccdab94c99bcaf5ae/TraeSentinel_Assets/TraeSentinel_LokiDashboard.png)
 
